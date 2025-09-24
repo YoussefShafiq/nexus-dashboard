@@ -1,0 +1,51 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+    @apply bg-background
+}
+
+.active {
+    @apply bg-gray-100 text-primary font-bold;
+}
+
+/* Custom CSS for Chips component */
+.p-chips {
+    border: 1px solid #d1d5db;
+    /* Gray border */
+    border-radius: 0.75rem;
+    /* Rounded corners */
+    padding: 0.5rem;
+    /* Padding inside the input */
+    background-color: white;
+    /* White background */
+}
+
+.p-chips .p-chips-multiple-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    /* Space between chips */
+    align-items: center;
+}
+
+.p-chips .p-chips-token {
+    background-color: #e5e7eb;
+    /* Gray background for chips */
+    border-radius: 9999px;
+    /* Fully rounded corners for chips */
+    padding: 0.25rem 0.75rem;
+    /* Padding for chips */
+    font-size: 0.875rem;
+    /* Text size for chips */
+}
+
+.p-chips .p-chips-input-token input {
+    border: none;
+    /* Remove border from input */
+    outline: none;
+    /* Remove outline */
+    background-color: transparent;
+    /* Transparent background */
+}

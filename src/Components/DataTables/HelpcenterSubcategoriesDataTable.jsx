@@ -1,0 +1,799 @@
+import React, { useState } from 'react';
+import toast from 'react-hot-toast';
+import axios from 'axios';
+import { motion } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
+import {
+    FaCheck,
+    FaSpinner,
+    FaPlus,
+    FaTrashAlt,
+    FaTimes,
+    FaEdit,
+    FaChevronRight,
+    FaChevronLeft,
+    FaEye,
+    FaEyeSlash
+} from 'react-icons/fa';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+
+export default function HelpcenterSubcategoriesDataTable({
+    helpcenterSubcategoriesData,
+    helpcenterCategoriesData,
+    loading,
+    refetch
+}) {
+    const navigate = useNavigate();
+    const queryClient = useQueryClient();
+    const [filters, setFilters] = useState({
+        global: '',
+        name: '',
+        category: '',
+        description: '',
+        status: ''
+    });
+    const [currentPage, setCurrentPage] = useState(1);
+    const [rowsPerPage] = useState(10);
+    const [togglingSubcategoryId, setTogglingSubcategoryId] = useState(null);
+    const [deletingSubcategoryId, setDeletingSubcategoryId] = useState(null);
+    const [showAddModal, setShowAddModal] = useState(false);
+    const [showEditModal, setShowEditModal] = useState(false);
+    const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+    const [subcategoryToDelete, setSubcategoryToDelete] = useState(null);
+    const [updatingSubcategory, setUpdatingSubcategory] = useState(false);
+    const [selectedSubcategory, setSelectedSubcategory] = useState(null);
+
+    // Form states
+    const [formData, setFormData] = useState({
+        category_id: '',
+        name: '',
+        description: '',
+        order: '',
+        is_active: true
+    });
+
+    const { data: currentUser } = useQuery({
+        queryKey: ['currentUser'],
+        queryFn: () => {
+            return axios.get('https://api.nexus.com/api/auth/me',
+                {
+                    headers: {
+                        Authorization: `Bearer ${localStorage.getItem('userToken')}`
+                    }
+                })
+        }
+    });
+
+    // Create mutation
+    const createMutation = useMutation({
+        mutationFn: (newSubcategory) => {
+            return axios.post(
+                'https://api.nexus.com/api/admin/help-center/subcategories',
+                newSubcategory,
+                {
+                    headers: {
+                        Authorization: `Bearer ${localStorage.getItem('userToken')}`
+                    }
+                }
+            );
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries(['helpcenterSubcategories']);
+            toast.success('Subcategory created successfully');
+            setShowAddModal(false);
+            resetForm();
+            refetch();
+        },
+        onError: (error) => {
+            toast.error(error.response?.data?.message || 'Failed to create subcategory');
+            if (error.response?.status == 401) {
+                localStorage.removeItem('userToken')
+                navigate('/login')
+            }
+            if (error.response?.status == 403) {
+                toast.error('You are not authorized to perform this action')
+            }
+        }
+    });
+
+    // Update mutation
+    const updateMutation = useMutation({
+        mutationFn: (updatedSubcategory) => {
+            return axios.put(
+                `https://api.nexus.com/api/admin/help-center/subcategories/${updatedSubcategory.id}`,
+                updatedSubcategory,
+                {
+                    headers: {
+                        Authorization: `Bearer ${localStorage.getItem('userToken')}`
+                    }
+                }
+            );
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries(['helpcenterSubcategories']);
+            toast.success('Subcategory updated successfully');
+            setShowEditModal(false);
+            resetForm();
+            refetch();
+        },
+        onError: (error) => {
+            toast.error(error.response?.data?.message || 'Failed to update subcategory');
+            if (error.response?.status == 401) {
+                localStorage.removeItem('userToken')
+                navigate('/login')
+            }
+            if (error.response?.status == 403) {
+                toast.error('You are not authorized to perform this action')
+            }
+        }
+    });
+
+    // Delete mutation
+    const deleteMutation = useMutation({
+        mutationFn: (id) => {
+            return axios.delete(
+                `https://api.nexus.com/api/admin/help-center/subcategories/${id}`,
+                {
+                    headers: {
+                        Authorization: `Bearer ${localStorage.getItem('userToken')}`
+                    }
+                }
+            );
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries(['helpcenterSubcategories']);
+            toast.success('Subcategory deleted successfully');
+            setShowDeleteConfirm(false);
+            refetch();
+        },
+        onError: (error) => {
+            toast.error(error.response?.data?.message || 'Failed to delete subcategory');
+            if (error.response?.status == 401) {
+                localStorage.removeItem('userToken')
+                navigate('/login')
+            }
+            if (error.response?.status == 403) {
+                toast.error('You are not authorized to perform this action')
+            }
+        }
+    });
+
+    const handleFilterChange = (field, value) => {
+        setFilters(prev => ({
+            ...prev,
+            [field]: value
+        }));
+        setCurrentPage(1);
+    };
+
+    const handleToggleStatus = async (subcategoryId, currentStatus) => {
+        setTogglingSubcategoryId(subcategoryId);
+        try {
+            await axios.patch(
+                `https://api.nexus.com/api/admin/help-center/subcategories/${subcategoryId}/toggle-status`,
+                {},
+                {
+                    headers: {
+                        Authorization: `Bearer ${localStorage.getItem('userToken')}`
+                    }
+                }
+            );
+            toast.success(`Subcategory ${currentStatus ? 'deactivated' : 'activated'} successfully`, { duration: 2000 });
+            refetch();
+        } catch (error) {
+            toast.error(error.response?.data?.message || 'An unexpected error occurred', { duration: 3000 });
+            if (error.response?.status == 401) {
+                localStorage.removeItem('userToken')
+                navigate('/login')
+            }
+            if (error.response?.status == 403) {
+                toast.error('You are not authorized to view this page')
+                navigate('/home')
+            }
+        } finally {
+            setTogglingSubcategoryId(null);
+        }
+    };
+
+    const handleDeleteClick = (subcategoryId) => {
+        setSubcategoryToDelete(subcategoryId);
+        setShowDeleteConfirm(true);
+    };
+
+    const handleConfirmDelete = async () => {
+        if (!subcategoryToDelete) return;
+        deleteMutation.mutate(subcategoryToDelete);
+    };
+
+    const handleFormChange = (e) => {
+        const { name, value, type, checked } = e.target;
+        setFormData(prev => ({
+            ...prev,
+            [name]: type === 'checkbox' ? checked : value
+        }));
+    };
+
+    const resetForm = () => {
+        setFormData({
+            category_id: '',
+            name: '',
+            description: '',
+            order: '',
+            is_active: true
+        });
+    };
+
+    const prepareEditForm = (subcategory) => {
+        setSelectedSubcategory(subcategory);
+        setFormData({
+            category_id: subcategory.category_id,
+            name: subcategory.name,
+            description: subcategory.description,
+            order: subcategory.order,
+            is_active: subcategory.is_active
+        });
+        setShowEditModal(true);
+    };
+
+    const handleAddSubcategory = (e) => {
+        e.preventDefault();
+        createMutation.mutate(formData);
+    };
+
+    const handleUpdateSubcategory = (e) => {
+        e.preventDefault();
+        updateMutation.mutate({
+            id: selectedSubcategory.id,
+            ...formData
+        });
+    };
+
+    // Filter subcategories based on all filter criteria
+    const filteredSubcategories = helpcenterSubcategoriesData?.filter(subcategory => {
+        const category = helpcenterCategoriesData?.find(c => c.id === subcategory.category_id);
+        const categoryName = category ? category.name.toLowerCase() : '';
+
+        return (
+            (filters.global === '' ||
+                subcategory.name.toLowerCase().includes(filters.global.toLowerCase()) ||
+                subcategory.description.toLowerCase().includes(filters.global.toLowerCase()) ||
+                categoryName.includes(filters.global.toLowerCase())) &&
+            (filters.name === '' ||
+                subcategory.name.toLowerCase().includes(filters.name.toLowerCase())) &&
+            (filters.category === '' ||
+                categoryName.includes(filters.category.toLowerCase())) &&
+            (filters.description === '' ||
+                subcategory.description.toLowerCase().includes(filters.description.toLowerCase())) &&
+            (filters.status === '' ||
+                (filters.status.toLowerCase() === 'active' && subcategory.is_active) ||
+                (filters.status.toLowerCase() === 'inactive' && !subcategory.is_active))
+        );
+    }) || [];
+
+    // Pagination logic
+    const totalPages = Math.ceil(filteredSubcategories.length / rowsPerPage);
+    const paginatedSubcategories = filteredSubcategories.slice(
+        (currentPage - 1) * rowsPerPage,
+        currentPage * rowsPerPage
+    );
+
+    const statusBadge = (is_active) => {
+        const statusClass = is_active
+            ? 'bg-[#009379] text-white'
+            : 'bg-[#930002] text-white';
+        return (
+            <span className={`flex justify-center w-fit items-center px-2.5 py-1 rounded-md text-xs font-medium ${statusClass} min-w-16 text-center`}>
+                {is_active ? 'Active' : 'Inactive'}
+            </span>
+        );
+    };
+
+    const getCategoryName = (categoryId) => {
+        const category = helpcenterCategoriesData?.find(c => c.id === categoryId);
+        return category ? category.name : 'Unknown Category';
+    };
+
+    const renderPagination = () => {
+        if (totalPages <= 1) return null;
+
+        return (
+            <div className="flex justify-between items-center mt-4 px-4 pb-1">
+                <div className='text-xs'>
+                    Showing {((currentPage - 1) * rowsPerPage + 1)}-{Math.min(currentPage * rowsPerPage, filteredSubcategories.length)} of {filteredSubcategories.length} entries
+                </div>
+                <div className="flex gap-1">
+                    <button
+                        onClick={() => setCurrentPage(1)}
+                        disabled={currentPage === 1}
+                        className="p-1 disabled:opacity-50"
+                    >
+                        <FaChevronLeft className="h-4 w-4" />
+                    </button>
+                    <span className="px-3 py-1">
+                        Page {currentPage} of {totalPages}
+                    </span>
+                    <button
+                        onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                        disabled={currentPage === totalPages}
+                        className="p-1 disabled:opacity-50"
+                    >
+                        <FaChevronRight className="h-4 w-4" />
+                    </button>
+                </div>
+            </div>
+        );
+    };
+
+    return (
+        <div className="shadow-2xl rounded-2xl overflow-hidden bg-white">
+            {/* Global Search and Add Button */}
+            <div className="p-4 border-b flex justify-between items-center gap-4">
+                <input
+                    type="text"
+                    value={filters.global}
+                    onChange={(e) => handleFilterChange('global', e.target.value)}
+                    placeholder="Search subcategories..."
+                    className="px-3 py-2 rounded-xl shadow-sm focus:outline-2 focus:outline-primary w-full border border-primary transition-all"
+                />
+                {currentUser?.data?.data?.permissions?.includes('create_help_subcategory') && (
+                    <button
+                        onClick={() => setShowAddModal(true)}
+                        className="bg-primary hover:bg-darkBlue transition-all text-white px-3 py-2 rounded-xl shadow-sm min-w-max flex items-center gap-2"
+                    >
+                        <FaPlus size={18} />
+                        <span>Add Subcategory</span>
+                    </button>
+                )}
+            </div>
+
+            {/* Table */}
+            <div className="overflow-x-auto">
+                <table className="w-full divide-y divide-gray-200">
+                    <thead className="bg-gray-50">
+                        <tr>
+                            <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                <input
+                                    type="text"
+                                    placeholder="Name"
+                                    value={filters.name}
+                                    onChange={(e) => handleFilterChange('name', e.target.value)}
+                                    className="text-xs p-1 border rounded w-full"
+                                />
+                            </th>
+                            <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                <input
+                                    type="text"
+                                    placeholder="Category"
+                                    value={filters.category}
+                                    onChange={(e) => handleFilterChange('category', e.target.value)}
+                                    className="text-xs p-1 border rounded w-full"
+                                />
+                            </th>
+                            <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                <input
+                                    type="text"
+                                    placeholder="Description"
+                                    value={filters.description}
+                                    onChange={(e) => handleFilterChange('description', e.target.value)}
+                                    className="text-xs p-1 border rounded w-full"
+                                />
+                            </th>
+                            <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Order
+                            </th>
+                            <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                <input
+                                    type="text"
+                                    placeholder="Status"
+                                    value={filters.status}
+                                    onChange={(e) => handleFilterChange('status', e.target.value)}
+                                    className="text-xs p-1 border rounded w-full"
+                                />
+                            </th>
+                            <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Actions
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200 text-sm">
+                        {loading ? (
+                            <tr>
+                                <td colSpan="6" className="px-3 py-4 text-center">
+                                    <div className="flex justify-center items-center gap-2">
+                                        <FaSpinner className="animate-spin" size={18} />
+                                        Loading subcategories...
+                                    </div>
+                                </td>
+                            </tr>
+                        ) : paginatedSubcategories.length === 0 ? (
+                            <tr>
+                                <td colSpan="6" className="px-3 py-4 text-center">
+                                    No subcategories found
+                                </td>
+                            </tr>
+                        ) : (
+                            paginatedSubcategories.map((subcategory) => (
+                                <tr key={subcategory.id} className="hover:bg-gray-50">
+                                    <td className="px-3 py-4 whitespace-nowrap">
+                                        <div className="font-medium">{subcategory.name}</div>
+                                    </td>
+                                    <td className="px-3 py-4 whitespace-nowrap">
+                                        {getCategoryName(subcategory.category_id)}
+                                    </td>
+                                    <td className="px-3 py-4">
+                                        <div className="line-clamp-2">{subcategory.description}</div>
+                                    </td>
+                                    <td className="px-3 py-4 whitespace-nowrap">
+                                        {subcategory.order}
+                                    </td>
+                                    <td className="px-3 py-4 whitespace-nowrap">
+                                        {statusBadge(subcategory.is_active)}
+                                    </td>
+                                    <td className="px-3 py-4 whitespace-nowrap">
+                                        <div className="flex items-center gap-2">
+                                            {currentUser?.data?.data?.permissions?.includes('edit_help_subcategory') && (
+                                                <button
+                                                    className="text-blue-500 hover:text-blue-700 p-1"
+                                                    onClick={() => prepareEditForm(subcategory)}
+                                                    disabled={updateMutation.isPending}
+                                                >
+                                                    {updateMutation.isPending && selectedSubcategory?.id === subcategory.id ? (
+                                                        <FaSpinner className="animate-spin" size={18} />
+                                                    ) : (
+                                                        <FaEdit size={18} />
+                                                    )}
+                                                </button>
+                                            )}
+                                            {currentUser?.data?.data?.permissions?.includes('toggle_help_center_subcategory_status') && (
+                                                <button
+                                                    className={`${subcategory.is_active ? 'text-red-500 hover:text-red-700' : 'text-green-500 hover:text-green-700'} p-1`}
+                                                    onClick={() => handleToggleStatus(subcategory.id, subcategory.is_active)}
+                                                    disabled={togglingSubcategoryId === subcategory.id}
+                                                >
+                                                    {togglingSubcategoryId === subcategory.id ? (
+                                                        <FaSpinner className="animate-spin" size={18} />
+                                                    ) : (
+                                                        subcategory.is_active ? <FaEyeSlash /> : <FaEye />
+                                                    )}
+                                                </button>
+                                            )}
+                                            {currentUser?.data?.data?.permissions?.includes('delete_help_subcategory') && (
+                                                <button
+                                                    className="text-red-500 hover:text-red-700 p-1"
+                                                    onClick={() => handleDeleteClick(subcategory.id)}
+                                                    disabled={deleteMutation.isPending}
+                                                >
+                                                    {deleteMutation.isPending && subcategoryToDelete === subcategory.id ? (
+                                                        <FaSpinner className="animate-spin" size={18} />
+                                                    ) : (
+                                                        <FaTrashAlt size={18} />
+                                                    )}
+                                                </button>
+                                            )}
+                                        </div>
+                                    </td>
+                                </tr>
+                            ))
+                        )}
+                    </tbody>
+                </table>
+            </div>
+
+            {/* Pagination */}
+            {!loading && renderPagination()}
+
+            {/* Add Subcategory Modal */}
+            {showAddModal && (
+                <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+                    onClick={() => setShowAddModal(false)}
+                >
+                    <motion.div
+                        initial={{ y: -50, opacity: 0 }}
+                        animate={{ y: 0, opacity: 1 }}
+                        exit={{ y: 50, opacity: 0 }}
+                        className="bg-white rounded-lg shadow-xl w-full max-w-md max-h-[90vh] overflow-y-auto"
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <div className="p-6">
+                            <h2 className="text-xl font-bold mb-4">Add New Subcategory</h2>
+                            <form onSubmit={handleAddSubcategory}>
+                                <div className="mb-4">
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Category*</label>
+                                    <select
+                                        name="category_id"
+                                        value={formData.category_id}
+                                        onChange={handleFormChange}
+                                        className="w-full px-3 py-2 border rounded-md"
+                                        required
+                                    >
+                                        <option value="">Select a category</option>
+                                        {helpcenterCategoriesData?.map(category => (
+                                            <option key={category.id} value={category.id}>
+                                                {category.name}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </div>
+
+                                <div className="mb-4">
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Name*</label>
+                                    <input
+                                        type="text"
+                                        name="name"
+                                        value={formData.name}
+                                        onChange={handleFormChange}
+                                        className="w-full px-3 py-2 border rounded-md"
+                                        required
+                                    />
+                                </div>
+
+                                <div className="mb-4">
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Description*</label>
+                                    <textarea
+                                        name="description"
+                                        value={formData.description}
+                                        onChange={handleFormChange}
+                                        className="w-full px-3 py-2 border rounded-md"
+                                        rows="3"
+                                        required
+                                    />
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-4 mb-4">
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Order*</label>
+                                        <input
+                                            type="number"
+                                            name="order"
+                                            value={formData.order}
+                                            onChange={handleFormChange}
+                                            className="w-full px-3 py-2 border rounded-md"
+                                            min="1"
+                                            required
+                                        />
+                                    </div>
+                                    <div className="flex items-center justify-end">
+                                        <div className="flex items-center">
+                                            <input
+                                                type="checkbox"
+                                                name="is_active"
+                                                checked={formData.is_active}
+                                                onChange={handleFormChange}
+                                                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                                            />
+                                            <label htmlFor="is_active" className="ml-2 text-sm text-gray-700">
+                                                Active
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="flex justify-end gap-3 mt-6">
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            setShowAddModal(false);
+                                            resetForm();
+                                        }}
+                                        className="px-4 py-2 border rounded-md text-gray-700 hover:bg-gray-50"
+                                    >
+                                        Cancel
+                                    </button>
+                                    <button
+                                        type="submit"
+                                        className="px-4 py-2 bg-primary text-white rounded-md hover:bg-darkBlue transition-all flex items-center justify-center gap-2"
+                                        disabled={createMutation.isPending}
+                                    >
+                                        {createMutation.isPending ? (
+                                            <>
+                                                <FaSpinner className="animate-spin" size={18} />
+                                                <span>Adding...</span>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <FaPlus size={18} />
+                                                <span>Add Subcategory</span>
+                                            </>
+                                        )}
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </motion.div>
+                </motion.div>
+            )}
+
+            {/* Edit Subcategory Modal */}
+            {showEditModal && (
+                <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+                    onClick={() => setShowEditModal(false)}
+                >
+                    <motion.div
+                        initial={{ y: -50, opacity: 0 }}
+                        animate={{ y: 0, opacity: 1 }}
+                        exit={{ y: 50, opacity: 0 }}
+                        className="bg-white rounded-lg shadow-xl w-full max-w-md max-h-[90vh] overflow-y-auto"
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <div className="p-6">
+                            <h2 className="text-xl font-bold mb-4">Edit Subcategory</h2>
+                            <form onSubmit={handleUpdateSubcategory}>
+                                <div className="mb-4">
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Category*</label>
+                                    <select
+                                        name="category_id"
+                                        value={formData.category_id}
+                                        onChange={handleFormChange}
+                                        className="w-full px-3 py-2 border rounded-md"
+                                        required
+                                    >
+                                        <option value="">Select a category</option>
+                                        {helpcenterCategoriesData?.map(category => (
+                                            <option key={category.id} value={category.id}>
+                                                {category.name}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </div>
+
+                                <div className="mb-4">
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Name*</label>
+                                    <input
+                                        type="text"
+                                        name="name"
+                                        value={formData.name}
+                                        onChange={handleFormChange}
+                                        className="w-full px-3 py-2 border rounded-md"
+                                        required
+                                    />
+                                </div>
+
+                                <div className="mb-4">
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Description*</label>
+                                    <textarea
+                                        name="description"
+                                        value={formData.description}
+                                        onChange={handleFormChange}
+                                        className="w-full px-3 py-2 border rounded-md"
+                                        rows="3"
+                                        required
+                                    />
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-4 mb-4">
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Order*</label>
+                                        <input
+                                            type="number"
+                                            name="order"
+                                            value={formData.order}
+                                            onChange={handleFormChange}
+                                            className="w-full px-3 py-2 border rounded-md"
+                                            min="1"
+                                            required
+                                        />
+                                    </div>
+                                    <div className="flex items-center justify-end">
+                                        <div className="flex items-center">
+                                            <input
+                                                type="checkbox"
+                                                name="is_active"
+                                                checked={formData.is_active}
+                                                onChange={handleFormChange}
+                                                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                                            />
+                                            <label htmlFor="is_active" className="ml-2 text-sm text-gray-700">
+                                                Active
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="flex justify-end gap-3 mt-6">
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            setShowEditModal(false);
+                                            resetForm();
+                                        }}
+                                        className="px-4 py-2 border rounded-md text-gray-700 hover:bg-gray-50"
+                                    >
+                                        Cancel
+                                    </button>
+                                    <button
+                                        type="submit"
+                                        className="px-4 py-2 bg-primary text-white rounded-md hover:bg-darkBlue transition-all flex items-center justify-center gap-2"
+                                        disabled={updateMutation.isPending}
+                                    >
+                                        {updateMutation.isPending ? (
+                                            <>
+                                                <FaSpinner className="animate-spin" size={18} />
+                                                <span>Updating...</span>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <FaEdit size={18} />
+                                                <span>Update Subcategory</span>
+                                            </>
+                                        )}
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </motion.div>
+                </motion.div>
+            )}
+
+            {/* Delete Confirmation Modal */}
+            {showDeleteConfirm && (
+                <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+                    onClick={() => setShowDeleteConfirm(false)}
+                >
+                    <motion.div
+                        initial={{ scale: 0.9, opacity: 0 }}
+                        animate={{ scale: 1, opacity: 1 }}
+                        exit={{ scale: 0.9, opacity: 0 }}
+                        className="bg-white rounded-lg shadow-xl w-full max-w-md"
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <div className="p-6">
+                            <div className="flex items-start">
+                                <div className="flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-red-100">
+                                    <FaTrashAlt className="h-5 w-5 text-red-600" />
+                                </div>
+                                <div className="ml-4">
+                                    <h3 className="text-lg font-medium text-gray-900">Delete Subcategory</h3>
+                                    <div className="mt-2">
+                                        <p className="text-sm text-gray-500">
+                                            Are you sure you want to delete the subcategory "{subcategoryToDelete && helpcenterSubcategoriesData.find(sc => sc.id === subcategoryToDelete)?.name}"?
+                                            This action cannot be undone.
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="mt-5 flex justify-end gap-3">
+                                <button
+                                    type="button"
+                                    onClick={() => setShowDeleteConfirm(false)}
+                                    className="px-4 py-2 border rounded-md text-gray-700 hover:bg-gray-50"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={handleConfirmDelete}
+                                    className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 flex items-center justify-center gap-2"
+                                    disabled={deleteMutation.isPending}
+                                >
+                                    {deleteMutation.isPending ? (
+                                        <>
+                                            <FaSpinner className="animate-spin" size={18} />
+                                            <span>Deleting...</span>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <FaTrashAlt size={18} />
+                                            <span>Delete</span>
+                                        </>
+                                    )}
+                                </button>
+                            </div>
+                        </div>
+                    </motion.div>
+                </motion.div>
+            )}
+        </div>
+    );
+}
