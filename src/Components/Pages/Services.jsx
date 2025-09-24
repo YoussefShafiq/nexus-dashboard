@@ -1,16 +1,17 @@
 import { useQuery } from '@tanstack/react-query'
 import axios from 'axios';
 import React, { useEffect } from 'react'
-import { useNavigate } from 'react-router-dom';
-import IntegrationsDataTable from '../DataTables/IntegrationsDataTable';
+import { Link, useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
+import ServicesDataTable from '../DataTables/ServicesDataTable';
 
-export default function Integrations() {
+export default function Services() {
     const navigate = useNavigate();
 
-    function getIntegrationsData() {
+
+    function getAllServices() {
         return axios.get(
-            `https://api.nexus.com/api/admin/integrations`,
+            `https://nexus-consults.com/api/admin/services`,
             {
                 headers: {
                     Authorization: `Bearer ${localStorage.getItem('userToken')}`
@@ -19,9 +20,9 @@ export default function Integrations() {
         );
     }
 
-    const { data: integrations, isLoading, refetch, isError, error } = useQuery({
-        queryKey: ['integrations'],
-        queryFn: getIntegrationsData,
+    const { data: services, isLoading, refetch, isError, error } = useQuery({
+        queryKey: ['services'],
+        queryFn: getAllServices,
     })
 
     useEffect(() => {
@@ -36,11 +37,13 @@ export default function Integrations() {
             }
         }
     }, [isError])
+
     return (
         <div className="p-4">
-            <h1 className="text-3xl font-bold text-gray-800 mb-8">Integrations</h1>
-            <IntegrationsDataTable
-                integrations={integrations?.data?.data || []}
+            <h1 className="text-3xl font-bold text-gray-800 mb-8">Services</h1>
+            <ServicesDataTable
+
+                services={services?.data?.data || []}
                 loading={isLoading}
                 refetch={refetch}
             />

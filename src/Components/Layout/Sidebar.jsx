@@ -54,7 +54,7 @@ export default function Sidebar() {
     const { data: currentUser, isLoading: isCurrentuserLoading, error, isError } = useQuery({
         queryKey: ['currentUser'],
         queryFn: () => {
-            return axios.get('https://api.nexus.com/api/auth/me',
+            return axios.get('https://nexus-consults.com/api/admin/auth/profile',
                 {
                     headers: {
                         Authorization: `Bearer ${localStorage.getItem('userToken')}`
@@ -67,59 +67,12 @@ export default function Sidebar() {
 
     const sidebarPages = [
         {
-            title: 'Integrations',
-            path: '/integrations',
+            title: 'Services',
+            path: '/services',
             icon: <IoLinkOutline />,
-            permission: "view_integrations"
+            permission: "view_services"
         },
-        {
-            title: 'Admins',
-            path: '/admins',
-            icon: <IoPeopleOutline />,
-            permission: 'view_admins'
-        },
-        {
-            title: 'Plans',
-            path: '/plans',
-            icon: <IoCardOutline />,
-            permission: 'view_plans'
-        },
-        {
-            title: 'Privacy Policy',
-            path: '/privacy-Policy',
-            icon: <IoDocumentTextOutline />,
-            permission: ''
-        },
-        {
-            title: 'Terms of Services',
-            path: '/terms-of-Services',
-            icon: <IoHammerOutline />,
-            permission: ''
-        },
-        {
-            title: 'Blogs',
-            path: '/blogs',
-            icon: <IoNewspaperOutline />,
-            permission: ''
-        },
-        {
-            title: 'Requested demos',
-            path: '/requested-demos',
-            icon: <IoCalendarOutline />,
-            permission: 'view_request_demos'
-        },
-        {
-            title: 'Help center',
-            path: '/help-center',
-            icon: <IoHelpBuoyOutline />,
-            permission: ''
-        },
-        {
-            title: 'Webinars',
-            path: '/webinars',
-            icon: <IoPeopleOutline />, // or <IoVideocamOutline /> if available
-            permission: 'manage_webinars'
-        },
+
     ]
     return <>
         <div className={`h-full bg-tramsparent p-5 fixed w-56 left-0 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} transition-all duration-500 z-50`}>
@@ -134,7 +87,7 @@ export default function Sidebar() {
                     <div className="flex flex-col gap-1 text-gray-400 text-base">
                         {sidebarPages.map((p, i) => (
                             <>
-                                {(currentUser?.data?.data?.permissions.includes(p.permission) || p.permission == '') && <NavLink key={i} className="px-4 py-2 rounded-xl flex items-center gap-2" to={p.path} ><div className="">{p.icon} </div>{p.title}</NavLink>}
+                                {(currentUser?.data?.data?.admin?.permissions.includes(p.permission) || p.permission == '') && <NavLink key={p.name} className="px-4 py-2 rounded-xl flex items-center gap-2" to={p.path} ><div className="">{p.icon} </div>{p.title}</NavLink>}
                             </>
                         ))}
                     </div>

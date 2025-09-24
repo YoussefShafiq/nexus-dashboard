@@ -26,7 +26,7 @@ export default function UserSetting() {
     const { data: currentUser, isLoading: isCurrentUserLoading } = useQuery({
         queryKey: ['currentUser'],
         queryFn: () => {
-            return axios.get('https://api.nexus.com/api/auth/me', {
+            return axios.get('https://api.propxpro.com/api/auth/me', {
                 headers: {
                     Authorization: `Bearer ${localStorage.getItem('userToken')}`
                 }
@@ -46,7 +46,7 @@ export default function UserSetting() {
     // Send verification code mutation
     const sendVerificationMutation = useMutation({
         mutationFn: async () => {
-            return axios.post('https://api.nexus.com/api/admin/settings/request-update', {}, {
+            return axios.post('https://api.propxpro.com/api/admin/settings/request-update', {}, {
                 headers: {
                     'Authorization': `Bearer ${localStorage.getItem('userToken')}`
                 }
@@ -77,7 +77,7 @@ export default function UserSetting() {
                 data.append('profile_image', selectedFile);
             }
 
-            return axios.post('https://api.nexus.com/api/admin/settings/confirm-update', data, {
+            return axios.post('https://api.propxpro.com/api/admin/settings/confirm-update', data, {
                 headers: {
                     'Authorization': `Bearer ${localStorage.getItem('userToken')}`,
                     'Content-Type': 'multipart/form-data'

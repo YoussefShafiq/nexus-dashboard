@@ -19,7 +19,7 @@ export default function Login() {
             toast.success('logged in successfully', {
                 duration: 2000,
             })
-            localStorage.setItem('userToken', data.data.access_token)
+            localStorage.setItem('userToken', data.data.token)
             navigate('/')
 
         } catch (error) {

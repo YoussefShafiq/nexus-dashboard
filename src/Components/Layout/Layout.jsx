@@ -11,7 +11,7 @@ export function UserBar() {
     const { data: currentUser, isLoading: isCurrentUserLoading } = useQuery({
         queryKey: ['currentUser'],
         queryFn: () => {
-            return axios.get('https://api.nexus.com/api/auth/me', {
+            return axios.get('https://nexus-consults.com/api/admin/auth/profile', {
                 headers: {
                     Authorization: `Bearer ${localStorage.getItem('userToken')}`
                 }
@@ -32,7 +32,7 @@ export default function Layout() {
     const { sidebarOpen, setSidebarOpen } = useContext(SidebarContext)
     return <>
         <UserBar />
-        <div className="flex bg-gradient-to-br from-white to-primary min-h-screen">
+        <div className="flex min-h-screen">
             <div className={`${sidebarOpen ? 'md:w-56' : 'w-0'} transition-all duration-500`}>
                 <Sidebar />
             </div>
