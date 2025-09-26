@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
 import toast from 'react-hot-toast';
 import axios from 'axios';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -878,20 +878,31 @@ export default function ServicesDataTable({ services, loading, refetch }) {
     // Image upload component
     const ImageUpload = React.memo(({ name, label, existingImage, currentImage, onImageChange, onRemoveImage }) => {
         const existingImageUrl = existingImage;
+        const [previewUrl, setPreviewUrl] = useState(null);
+        
+        // Create preview URL for current image and clean up on unmount
+        useEffect(() => {
+            if (currentImage && currentImage instanceof File) {
+                const url = URL.createObjectURL(currentImage);
+                setPreviewUrl(url);
+                return () => {
+                    URL.revokeObjectURL(url);
+                    setPreviewUrl(null);
+                };
+            } else {
+                setPreviewUrl(null);
+            }
+        }, [currentImage]);
 
         return (
             <div className="mb-4">
                 <label className="block text-sm font-medium text-gray-700 mb-1">{label}</label>
-                {currentImage ? (
+                {previewUrl ? (
                     <div className="relative mb-4">
                         <img
-                            src={URL.createObjectURL(currentImage)}
+                            src={previewUrl}
                             alt="Preview"
                             className="h-48 w-full object-cover rounded-lg"
-                            onLoad={(e) => {
-                                // Clean up the object URL after the image loads to prevent memory leaks
-                                setTimeout(() => URL.revokeObjectURL(e.target.src), 100);
-                            }}
                         />
                         <button
                             type="button"
@@ -938,6 +949,14 @@ export default function ServicesDataTable({ services, loading, refetch }) {
                     </label>
                 )}
             </div>
+        );
+    }, (prevProps, nextProps) => {
+        // Custom comparison to prevent unnecessary re-renders
+        return (
+            prevProps.name === nextProps.name &&
+            prevProps.label === nextProps.label &&
+            prevProps.existingImage === nextProps.existingImage &&
+            prevProps.currentImage === nextProps.currentImage
         );
     });
 

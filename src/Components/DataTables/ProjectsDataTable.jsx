@@ -269,21 +269,33 @@ export default function ProjectsDataTable({ projects, loading, refetch }) {
             tags: draft.tags || []
         });
         setIsSlugManuallyEdited(true);
-        setActiveDraftId(draft.id);
         setShowAddModal(true);
         toast('Draft loaded');
     };
 
     // Auto-save while Add modal is open
     const addAutoSaveInterval = useRef(null);
+    const lastAutoSaveRef = useRef('');
+
     useEffect(() => {
         if (showAddModal) {
             // start interval
             addAutoSaveInterval.current = setInterval(() => {
                 const draft = makeDraftFromForm();
                 if (draft) {
-                    setActiveDraftId(prev => prev || draft.id);
-                    upsertDraft(draft);
+                    // Only save if content has actually changed
+                    const currentContent = JSON.stringify({
+                        title: draft.title,
+                        content1: draft.content1,
+                        content2: draft.content2,
+                        content3: draft.content3
+                    });
+
+                    if (currentContent !== lastAutoSaveRef.current) {
+                        setActiveDraftId(prev => prev || draft.id);
+                        upsertDraft(draft);
+                        lastAutoSaveRef.current = currentContent;
+                    }
                 }
             }, 5000); // 5s
 
@@ -306,8 +318,9 @@ export default function ProjectsDataTable({ projects, loading, refetch }) {
             };
         } else {
             if (addAutoSaveInterval.current) clearInterval(addAutoSaveInterval.current);
+            lastAutoSaveRef.current = '';
         }
-    }, [showAddModal, formData]);
+    }, [showAddModal]);
 
     // Function to generate slug from title
     const generateSlug = (title) => {
