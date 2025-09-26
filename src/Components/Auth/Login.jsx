@@ -15,7 +15,6 @@ export default function Login() {
         try {
             let { data } = await axios.post('https://nexus-consults.com/api/admin/auth/login', values)
             setloading(false)
-            console.log(data);
             toast.success('logged in successfully', {
                 duration: 2000,
             })

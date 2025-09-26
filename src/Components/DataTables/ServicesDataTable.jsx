@@ -59,7 +59,6 @@ export default function ServicesDataTable({ services, loading, refetch }) {
     const [isEditSlugManuallyEdited, setIsEditSlugManuallyEdited] = useState(false);
     const [editingServiceId, setEditingServiceId] = useState(null);
 
-    // Drafts (client-side only)
     const DRAFTS_STORAGE_KEY = 'serviceDrafts';
     const [drafts, setDrafts] = useState([]);
     const [activeDraftId, setActiveDraftId] = useState(null);
@@ -68,6 +67,7 @@ export default function ServicesDataTable({ services, loading, refetch }) {
     const [formData, setFormData] = useState({
         title: '',
         slug: '',
+        description: '',
         is_active: true,
         cover_photo: null,
         content1: '',
@@ -83,6 +83,7 @@ export default function ServicesDataTable({ services, loading, refetch }) {
         id: null,
         title: '',
         slug: '',
+        description: '',
         is_active: true,
         cover_photo: null,
         existing_cover_photo: null,
@@ -219,6 +220,7 @@ export default function ServicesDataTable({ services, loading, refetch }) {
     const makeDraftFromForm = () => {
         // Avoid saving empty drafts
         const hasContent = (formData.title && formData.title.trim() !== '') ||
+            (formData.description && formData.description.trim() !== '') ||
             (formData.content1 && formData.content1.trim() !== '') ||
             (formData.content2 && formData.content2.trim() !== '') ||
             (formData.content3 && formData.content3.trim() !== '');
@@ -233,6 +235,7 @@ export default function ServicesDataTable({ services, loading, refetch }) {
             id: id || `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
             title: formData.title,
             slug: formData.slug,
+            description: formData.description,
             is_active: formData.is_active,
             content1: formData.content1,
             content2: formData.content2,
@@ -258,6 +261,7 @@ export default function ServicesDataTable({ services, loading, refetch }) {
         setFormData({
             title: draft.title || '',
             slug: draft.slug || '',
+            description: draft.description || '',
             is_active: draft.is_active ?? true,
             content1: draft.content1 || '',
             content2: draft.content2 || '',
@@ -515,7 +519,6 @@ export default function ServicesDataTable({ services, loading, refetch }) {
     const handleEditContent2Change = (content) => {
         setEditFormData(prev => ({ ...prev, content2: content }));
     };
-
     const handleEditContent3Change = (content) => {
         setEditFormData(prev => ({ ...prev, content3: content }));
     };
@@ -524,6 +527,7 @@ export default function ServicesDataTable({ services, loading, refetch }) {
         setFormData({
             title: '',
             slug: '',
+            description: '',
             is_active: true,
             cover_photo: null,
             content1: '',
@@ -551,6 +555,7 @@ export default function ServicesDataTable({ services, loading, refetch }) {
                 id: serviceData.id,
                 title: serviceData.title,
                 slug: serviceData.slug,
+                description: serviceData.description || '',
                 is_active: serviceData.is_active,
                 cover_photo: null,
                 existing_cover_photo: serviceData.cover_photo,
@@ -600,6 +605,8 @@ export default function ServicesDataTable({ services, loading, refetch }) {
                 formDataToSend.append('image3', formData.image3);
             }
 
+            formDataToSend.append('description', formData.description);
+
             await axios.post(
                 'https://nexus-consults.com/api/admin/services',
                 formDataToSend,
@@ -644,6 +651,7 @@ export default function ServicesDataTable({ services, loading, refetch }) {
             formDataToSend.append('content1', editFormData.content1);
             formDataToSend.append('content2', editFormData.content2);
             formDataToSend.append('content3', editFormData.content3);
+            formDataToSend.append('description', editFormData.description);
             formDataToSend.append('_method', 'POST');
 
             editFormData.tags.forEach(tag => {
@@ -1367,6 +1375,18 @@ export default function ServicesDataTable({ services, loading, refetch }) {
                                     </p>
                                 </div>
 
+                                <div className="mb-4">
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                                    <textarea
+                                        name="description"
+                                        value={formData.description}
+                                        onChange={handleFormChange}
+                                        rows={3}
+                                        className="w-full px-3 py-2 border rounded-md resize-vertical"
+                                        placeholder="Enter service description..."
+                                    />
+                                </div>
+
                                 {/* Cover Photo Upload */}
                                 <ImageUpload
                                     name="cover_photo"
@@ -1608,6 +1628,18 @@ export default function ServicesDataTable({ services, loading, refetch }) {
                                                 "Slug is manually edited. Click the X to reset to auto-generated." :
                                                 "Slug is auto-generated from title. You can edit it manually."}
                                         </p>
+                                    </div>
+
+                                    <div className="mb-4">
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                                        <textarea
+                                            name="description"
+                                            value={editFormData.description}
+                                            onChange={handleEditFormChange}
+                                            rows={3}
+                                            className="w-full px-3 py-2 border rounded-md resize-vertical"
+                                            placeholder="Enter service description..."
+                                        />
                                     </div>
 
                                     {/* Cover Photo Upload */}

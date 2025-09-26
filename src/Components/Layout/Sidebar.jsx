@@ -67,6 +67,12 @@ export default function Sidebar() {
 
     const sidebarPages = [
         {
+            title: 'Admins',
+            path: '/admins',
+            icon: <IoLinkOutline />,
+            permission: ""
+        },
+        {
             title: 'Services',
             path: '/services',
             icon: <IoLinkOutline />,

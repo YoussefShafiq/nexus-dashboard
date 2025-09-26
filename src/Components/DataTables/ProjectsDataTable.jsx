@@ -59,7 +59,6 @@ export default function ProjectsDataTable({ projects, loading, refetch }) {
     const [isEditSlugManuallyEdited, setIsEditSlugManuallyEdited] = useState(false);
     const [editingProjectId, setEditingProjectId] = useState(null);
 
-    // Drafts (client-side only)
     const DRAFTS_STORAGE_KEY = 'projectDrafts';
     const [drafts, setDrafts] = useState([]);
     const [activeDraftId, setActiveDraftId] = useState(null);
@@ -68,6 +67,7 @@ export default function ProjectsDataTable({ projects, loading, refetch }) {
     const [formData, setFormData] = useState({
         title: '',
         slug: '',
+        description: '',
         is_active: true,
         cover_photo: null,
         content1: '',
@@ -83,6 +83,7 @@ export default function ProjectsDataTable({ projects, loading, refetch }) {
         id: null,
         title: '',
         slug: '',
+        description: '',
         is_active: true,
         cover_photo: null,
         existing_cover_photo: null,
@@ -219,6 +220,7 @@ export default function ProjectsDataTable({ projects, loading, refetch }) {
     const makeDraftFromForm = () => {
         // Avoid saving empty drafts
         const hasContent = (formData.title && formData.title.trim() !== '') ||
+            (formData.description && formData.description.trim() !== '') ||
             (formData.content1 && formData.content1.trim() !== '') ||
             (formData.content2 && formData.content2.trim() !== '') ||
             (formData.content3 && formData.content3.trim() !== '');
@@ -233,6 +235,7 @@ export default function ProjectsDataTable({ projects, loading, refetch }) {
             id: id || `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
             title: formData.title,
             slug: formData.slug,
+            description: formData.description,
             is_active: formData.is_active,
             content1: formData.content1,
             content2: formData.content2,
@@ -258,6 +261,7 @@ export default function ProjectsDataTable({ projects, loading, refetch }) {
         setFormData({
             title: draft.title || '',
             slug: draft.slug || '',
+            description: draft.description || '',
             is_active: draft.is_active ?? true,
             content1: draft.content1 || '',
             content2: draft.content2 || '',
@@ -286,9 +290,11 @@ export default function ProjectsDataTable({ projects, loading, refetch }) {
                     // Only save if content has actually changed
                     const currentContent = JSON.stringify({
                         title: draft.title,
+                        description: draft.description,
                         content1: draft.content1,
                         content2: draft.content2,
-                        content3: draft.content3
+                        content3: draft.content3,
+                        tags: draft.tags
                     });
 
                     if (currentContent !== lastAutoSaveRef.current) {
@@ -528,7 +534,6 @@ export default function ProjectsDataTable({ projects, loading, refetch }) {
     const handleEditContent2Change = (content) => {
         setEditFormData(prev => ({ ...prev, content2: content }));
     };
-
     const handleEditContent3Change = (content) => {
         setEditFormData(prev => ({ ...prev, content3: content }));
     };
@@ -537,6 +542,7 @@ export default function ProjectsDataTable({ projects, loading, refetch }) {
         setFormData({
             title: '',
             slug: '',
+            description: '',
             is_active: true,
             cover_photo: null,
             content1: '',
@@ -564,6 +570,7 @@ export default function ProjectsDataTable({ projects, loading, refetch }) {
                 id: projectData.id,
                 title: projectData.title,
                 slug: projectData.slug,
+                description: projectData.description || '',
                 is_active: projectData.is_active,
                 cover_photo: null,
                 existing_cover_photo: projectData.cover_photo,
@@ -613,6 +620,8 @@ export default function ProjectsDataTable({ projects, loading, refetch }) {
                 formDataToSend.append('image3', formData.image3);
             }
 
+            formDataToSend.append('description', formData.description);
+
             await axios.post(
                 'https://nexus-consults.com/api/admin/projects',
                 formDataToSend,
@@ -657,6 +666,7 @@ export default function ProjectsDataTable({ projects, loading, refetch }) {
             formDataToSend.append('content1', editFormData.content1);
             formDataToSend.append('content2', editFormData.content2);
             formDataToSend.append('content3', editFormData.content3);
+            formDataToSend.append('description', editFormData.description);
             formDataToSend.append('_method', 'POST');
 
             editFormData.tags.forEach(tag => {
@@ -1097,7 +1107,7 @@ export default function ProjectsDataTable({ projects, loading, refetch }) {
                                             <button
                                                 className={`${project.is_active ? 'text-red-500 hover:text-red-700' : 'text-green-500 hover:text-green-700'} p-1`}
                                                 onClick={() => handleToggleStatus(project.id, project.is_active)}
-                                                disabled={togglingProjecteId === project.id}
+                                                disabled={togglingProjectId === project.id}
                                             >
                                                 {togglingProjectId === project.id ? (
                                                     <FaSpinner className="animate-spin" size={18} />
@@ -1355,6 +1365,18 @@ export default function ProjectsDataTable({ projects, loading, refetch }) {
                                     </p>
                                 </div>
 
+                                <div className="mb-4">
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                                    <textarea
+                                        name="description"
+                                        value={formData.description}
+                                        onChange={handleFormChange}
+                                        rows={3}
+                                        className="w-full px-3 py-2 border rounded-md resize-vertical"
+                                        placeholder="Enter project description..."
+                                    />
+                                </div>
+
                                 {/* Cover Photo Upload */}
                                 <ImageUpload
                                     name="cover_photo"
@@ -1592,6 +1614,18 @@ export default function ProjectsDataTable({ projects, loading, refetch }) {
                                                 "Slug is manually edited. Click the X to reset to auto-generated." :
                                                 "Slug is auto-generated from title. You can edit it manually."}
                                         </p>
+                                    </div>
+
+                                    <div className="mb-4">
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                                        <textarea
+                                            name="description"
+                                            value={editFormData.description}
+                                            onChange={handleEditFormChange}
+                                            rows={3}
+                                            className="w-full px-3 py-2 border rounded-md resize-vertical"
+                                            placeholder="Enter project description..."
+                                        />
                                     </div>
 
                                     {/* Cover Photo Upload */}

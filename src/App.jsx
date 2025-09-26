@@ -11,6 +11,7 @@ import Notfound from './Components/Notfound'
 import Services from './Components/Pages/Services'
 import Home from './Components/Pages/Home'
 import Projects from './Components/Pages/Projects'
+import Admins from './Components/Pages/Admins'
 
 function App() {
 
@@ -21,6 +22,7 @@ function App() {
         { index: true, element: <ProtectedRoute><Home /></ProtectedRoute> },
         { path: '/services', element: <ProtectedRoute><Services /></ProtectedRoute> },
         { path: '/projects', element: <ProtectedRoute><Projects /></ProtectedRoute> },
+        { path: '/admins', element: <ProtectedRoute><Admins /></ProtectedRoute> },
 
       ]
     },
