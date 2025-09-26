@@ -72,6 +72,12 @@ export default function Sidebar() {
             icon: <IoLinkOutline />,
             permission: "view_services"
         },
+        {
+            title: 'Projects',
+            path: '/projects',
+            icon: <IoLinkOutline />,
+            permission: "view_projects"
+        },
 
     ]
     return <>

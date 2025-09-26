@@ -32,10 +32,10 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import localforage from 'localforage';
 
-export default function ServicesDataTable({ services, loading, refetch }) {
+export default function ProjectsDataTable({ projects, loading, refetch }) {
     const navigate = useNavigate();
     const queryClient = useQueryClient();
-    const [selectedServices, setSelectedServices] = useState([]);
+    const [selectedProjects, setSelectedProjects] = useState([]);
     const [selectAll, setSelectAll] = useState(false);
     const [isBulkActionLoading, setIsBulkActionLoading] = useState(false);
     const [filters, setFilters] = useState({
@@ -48,19 +48,19 @@ export default function ServicesDataTable({ services, loading, refetch }) {
     });
     const [currentPage, setCurrentPage] = useState(1);
     const [rowsPerPage] = useState(10);
-    const [deletingServiceId, setDeletingServiceId] = useState(null);
-    const [togglingServiceId, setTogglingServiceId] = useState(null);
+    const [deletingProjectId, setDeletingProjectId] = useState(null);
+    const [togglingProjectId, setTogglingProjectId] = useState(null);
     const [showAddModal, setShowAddModal] = useState(false);
     const [showEditModal, setShowEditModal] = useState(false);
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-    const [serviceToDelete, setServiceToDelete] = useState(null);
-    const [updatingService, setUpdatingService] = useState(false);
+    const [projectToDelete, setProjectToDelete] = useState(null);
+    const [updatingProject, setUpdatingProject] = useState(false);
     const [isSlugManuallyEdited, setIsSlugManuallyEdited] = useState(false);
     const [isEditSlugManuallyEdited, setIsEditSlugManuallyEdited] = useState(false);
-    const [editingServiceId, setEditingServiceId] = useState(null);
+    const [editingProjectId, setEditingProjectId] = useState(null);
 
     // Drafts (client-side only)
-    const DRAFTS_STORAGE_KEY = 'serviceDrafts';
+    const DRAFTS_STORAGE_KEY = 'projectDrafts';
     const [drafts, setDrafts] = useState([]);
     const [activeDraftId, setActiveDraftId] = useState(null);
 
@@ -111,13 +111,13 @@ export default function ServicesDataTable({ services, loading, refetch }) {
         }
     });
 
-    // Fetch individual service by ID
-    const { data: serviceData, isLoading: isServiceLoading, refetch: refetchService } = useQuery({
-        queryKey: ['service', editingServiceId],
+    // Fetch individual project by ID
+    const { data: projectData, isLoading: isProjectLoading, refetch: refetchProject } = useQuery({
+        queryKey: ['project', editingProjectId],
         queryFn: () => {
-            if (!editingServiceId) return Promise.resolve(null);
+            if (!editingProjectId) return Promise.resolve(null);
             return axios.get(
-                `https://nexus-consults.com/api/admin/services/${editingServiceId}`,
+                `https://nexus-consults.com/api/admin/projects/${editingProjectId}`,
                 {
                     headers: {
                         Authorization: `Bearer ${localStorage.getItem('userToken')}`
@@ -125,12 +125,12 @@ export default function ServicesDataTable({ services, loading, refetch }) {
                 }
             ).then(res => res.data.data);
         },
-        enabled: !!editingServiceId,
+        enabled: !!editingProjectId,
         staleTime: 5 * 60 * 1000, // 5 minutes
     });
 
     // -------- Drafts utilities (IndexedDB via localforage) --------
-    const DRAFTS_FALLBACK_KEY = 'serviceDrafts_beforeunload_fallback';
+    const DRAFTS_FALLBACK_KEY = 'projectDrafts_beforeunload_fallback';
     const loadDrafts = async () => {
         try {
             const list = await localforage.getItem(DRAFTS_STORAGE_KEY);
@@ -324,11 +324,11 @@ export default function ServicesDataTable({ services, loading, refetch }) {
         setCurrentPage(1);
     };
 
-    const handleToggleStatus = async (serviceId, currentStatus) => {
-        setTogglingServiceId(serviceId);
+    const handleToggleStatus = async (projectId, currentStatus) => {
+        setTogglingProjectId(projectId);
         try {
             await axios.patch(
-                `https://nexus-consults.com/api/admin/services/${serviceId}/toggle-active`,
+                `https://nexus-consults.com/api/admin/projects/${projectId}/toggle-active`,
                 {},
                 {
                     headers: {
@@ -336,7 +336,7 @@ export default function ServicesDataTable({ services, loading, refetch }) {
                     }
                 }
             );
-            toast.success(`Service ${currentStatus ? 'deactivated' : 'activated'} successfully`, { duration: 2000 });
+            toast.success(`Project ${currentStatus ? 'deactivated' : 'activated'} successfully`, { duration: 2000 });
             refetch();
         } catch (error) {
             toast.error(error.response?.data?.message || 'An unexpected error occurred', { duration: 3000 });
@@ -349,31 +349,31 @@ export default function ServicesDataTable({ services, loading, refetch }) {
                 navigate('/home')
             }
         } finally {
-            setTogglingServiceId(null);
+            setTogglingProjectId(null);
         }
     };
 
-    const handleDeleteClick = (serviceId) => {
-        setServiceToDelete(serviceId);
+    const handleDeleteClick = (projectId) => {
+        setProjectToDelete(projectId);
         setShowDeleteConfirm(true);
     };
 
     const handleConfirmDelete = async () => {
-        if (!serviceToDelete) return;
+        if (!projectToDelete) return;
 
-        setDeletingServiceId(serviceToDelete);
+        setDeletingProjectId(projectToDelete);
         setShowDeleteConfirm(false);
 
         try {
             await axios.delete(
-                `https://nexus-consults.com/api/admin/services/${serviceToDelete}`,
+                `https://nexus-consults.com/api/admin/projects/${projectToDelete}`,
                 {
                     headers: {
                         Authorization: `Bearer ${localStorage.getItem('userToken')}`
                     }
                 }
             );
-            toast.success('Service deleted successfully', { duration: 2000 });
+            toast.success('Project deleted successfully', { duration: 2000 });
             refetch();
         } catch (error) {
             toast.error(error.response?.data?.message || 'An unexpected error occurred', { duration: 3000 });
@@ -386,8 +386,8 @@ export default function ServicesDataTable({ services, loading, refetch }) {
                 navigate('/home')
             }
         } finally {
-            setDeletingServiceId(null);
-            setServiceToDelete(null);
+            setDeletingProjectId(null);
+            setProjectToDelete(null);
         }
     };
 
@@ -537,23 +537,23 @@ export default function ServicesDataTable({ services, loading, refetch }) {
         setIsSlugManuallyEdited(false);
     };
 
-    const prepareEditForm = (service) => {
-        setEditingServiceId(service.id);
-        // The form will be populated when serviceData is fetched
+    const prepareEditForm = (project) => {
+        setEditingProjectId(project.id);
+        // The form will be populated when projectData is fetched
     };
 
-    // Effect to populate edit form when service data is fetched
+    // Effect to populate edit form when project data is fetched
     useEffect(() => {
-        if (serviceData && editingServiceId) {
+        if (projectData && editingProjectId) {
             // Map sections data to individual content and image fields
-            const sections = serviceData.sections || [];
+            const sections = projectData.sections || [];
             setEditFormData({
-                id: serviceData.id,
-                title: serviceData.title,
-                slug: serviceData.slug,
-                is_active: serviceData.is_active,
+                id: projectData.id,
+                title: projectData.title,
+                slug: projectData.slug,
+                is_active: projectData.is_active,
                 cover_photo: null,
-                existing_cover_photo: serviceData.cover_photo,
+                existing_cover_photo: projectData.cover_photo,
                 content1: sections[0]?.content || '',
                 image1: null,
                 existing_image1: sections[0]?.image || null,
@@ -563,17 +563,17 @@ export default function ServicesDataTable({ services, loading, refetch }) {
                 content3: sections[2]?.content || '',
                 image3: null,
                 existing_image3: sections[2]?.image || null,
-                tags: serviceData.tags || []
+                tags: projectData.tags || []
             });
             setIsEditSlugManuallyEdited(true);
             setShowEditModal(true);
         }
-    }, [serviceData, editingServiceId]);
+    }, [projectData, editingProjectId]);
 
-    const handleAddService = async (e) => {
+    const handleAddProject = async (e) => {
         e.preventDefault();
 
-        setUpdatingService(true);
+        setUpdatingProject(true);
         try {
             const formDataToSend = new FormData();
             formDataToSend.append('title', formData.title);
@@ -601,7 +601,7 @@ export default function ServicesDataTable({ services, loading, refetch }) {
             }
 
             await axios.post(
-                'https://nexus-consults.com/api/admin/services',
+                'https://nexus-consults.com/api/admin/projects',
                 formDataToSend,
                 {
                     headers: {
@@ -610,8 +610,8 @@ export default function ServicesDataTable({ services, loading, refetch }) {
                     }
                 }
             );
-            setUpdatingService(false);
-            toast.success('Service added successfully', { duration: 2000 });
+            setUpdatingProject(false);
+            toast.success('Project added successfully', { duration: 2000 });
             setShowAddModal(false);
             resetForm();
             refetch();
@@ -619,7 +619,7 @@ export default function ServicesDataTable({ services, loading, refetch }) {
             clearMatchingDraftBySlug(formData.slug);
             setActiveDraftId(null);
         } catch (error) {
-            setUpdatingService(false);
+            setUpdatingProject(false);
             toast.error(error.response?.data?.message || 'An unexpected error occurred', { duration: 3000 });
             if (error.response?.status == 401) {
                 localStorage.removeItem('userToken')
@@ -632,10 +632,10 @@ export default function ServicesDataTable({ services, loading, refetch }) {
         }
     };
 
-    const handleUpdateService = async (e) => {
+    const handleUpdateProject = async (e) => {
         e.preventDefault();
 
-        setUpdatingService(true);
+        setUpdatingProject(true);
         try {
             const formDataToSend = new FormData();
             formDataToSend.append('title', editFormData.title);
@@ -664,7 +664,7 @@ export default function ServicesDataTable({ services, loading, refetch }) {
             }
 
             await axios.post(
-                `https://nexus-consults.com/api/admin/services/${editFormData.id}`,
+                `https://nexus-consults.com/api/admin/projects/${editFormData.id}`,
                 formDataToSend,
                 {
                     headers: {
@@ -673,15 +673,15 @@ export default function ServicesDataTable({ services, loading, refetch }) {
                     }
                 }
             );
-            setUpdatingService(false);
-            toast.success('Service updated successfully', { duration: 2000 });
+            setUpdatingProject(false);
+            toast.success('Project updated successfully', { duration: 2000 });
             setShowEditModal(false);
-            setEditingServiceId(null);
+            setEditingProjectId(null);
             refetch();
-            // Invalidate the service query to refetch fresh data
-            queryClient.invalidateQueries(['service', editFormData.id]);
+            // Invalidate the project query to refetch fresh data
+            queryClient.invalidateQueries(['project', editFormData.id]);
         } catch (error) {
-            setUpdatingService(false);
+            setUpdatingProject(false);
             toast.error(error.response?.data?.message || 'An unexpected error occurred', { duration: 3000 });
             if (error.response?.status == 401) {
                 localStorage.removeItem('userToken')
@@ -694,23 +694,23 @@ export default function ServicesDataTable({ services, loading, refetch }) {
         }
     };
 
-    // Filter services based on all filter criteria
-    const filteredServices = services?.filter(service => {
+    // Filter projects based on all filter criteria
+    const filteredProjects = projects?.filter(project => {
         // Text filters
         const matchesGlobal =
             filters.global === '' ||
-            service.title.toLowerCase().includes(filters.global.toLowerCase()) ||
-            (service.author?.name ? service.author.name.toLowerCase().includes(filters.global.toLowerCase()) : false);
+            project.title.toLowerCase().includes(filters.global.toLowerCase()) ||
+            (project.author?.name ? project.author.name.toLowerCase().includes(filters.global.toLowerCase()) : false);
 
-        const matchesTitle = filters.title === '' || service.title.toLowerCase().includes(filters.title.toLowerCase());
-        const matchesStatus = filters.status === '' || (filters.status === 'active' ? service.is_active : !service.is_active);
+        const matchesTitle = filters.title === '' || project.title.toLowerCase().includes(filters.title.toLowerCase());
+        const matchesStatus = filters.status === '' || (filters.status === 'active' ? project.is_active : !project.is_active);
         const matchesAuthor =
-            filters.author === '' || (service.author?.name ? service.author.name.toLowerCase().includes(filters.author.toLowerCase()) : false);
+            filters.author === '' || (project.author?.name ? project.author.name.toLowerCase().includes(filters.author.toLowerCase()) : false);
 
         // Date range filter on created_at
         let matchesDate = true;
-        if (service.created_at) {
-            const createdDate = new Date(service.created_at);
+        if (project.created_at) {
+            const createdDate = new Date(project.created_at);
             if (filters.created_from) {
                 const start = new Date(`${filters.created_from}T00:00:00`);
                 if (createdDate < start) matchesDate = false;
@@ -725,8 +725,8 @@ export default function ServicesDataTable({ services, loading, refetch }) {
     }) || [];
 
     // Pagination logic
-    const totalPages = Math.ceil(filteredServices.length / rowsPerPage);
-    const paginatedServices = filteredServices.slice(
+    const totalPages = Math.ceil(filteredProjects.length / rowsPerPage);
+    const paginatedProjects = filteredProjects.slice(
         (currentPage - 1) * rowsPerPage,
         currentPage * rowsPerPage
     );
@@ -762,7 +762,7 @@ export default function ServicesDataTable({ services, loading, refetch }) {
         return (
             <div className="flex justify-between items-center mt-4 px-4 pb-1">
                 <div className='text-xs'>
-                    Showing {((currentPage - 1) * rowsPerPage + 1)}-{Math.min(currentPage * rowsPerPage, filteredServices.length)} of {filteredServices.length} entries
+                    Showing {((currentPage - 1) * rowsPerPage + 1)}-{Math.min(currentPage * rowsPerPage, filteredProjects.length)} of {filteredProjects.length} entries
                 </div>
                 <div className="flex gap-1">
                     <button
@@ -788,22 +788,22 @@ export default function ServicesDataTable({ services, loading, refetch }) {
     };
 
 
-    // Handle individual service selection
-    const handleSelectService = (serviceId, isSelected) => {
+    // Handle individual project selection
+    const handleSelectProject = (projectId, isSelected) => {
         if (isSelected) {
-            setSelectedServices(prev => [...prev, serviceId]);
+            setSelectedProjects(prev => [...prev, projectId]);
         } else {
-            setSelectedServices(prev => prev.filter(id => id !== serviceId));
+            setSelectedProjects(prev => prev.filter(id => id !== projectId));
         }
     };
 
     // Handle select all
     const handleSelectAll = (isSelected) => {
         if (isSelected) {
-            setSelectedServices(filteredServices.map(service => service.id));
+            setSelectedProjects(filteredProjects.map(project => project.id));
             setSelectAll(true);
         } else {
-            setSelectedServices([]);
+            setSelectedProjects([]);
             setSelectAll(false);
         }
     };
@@ -811,9 +811,9 @@ export default function ServicesDataTable({ services, loading, refetch }) {
     // State for delete confirmation modal
     const [showBulkDeleteConfirm, setShowBulkDeleteConfirm] = useState(false);
 
-    // Bulk delete services
+    // Bulk delete projects
     const handleBulkDelete = async () => {
-        if (!selectedServices.length) return;
+        if (!selectedProjects.length) return;
         setShowBulkDeleteConfirm(true);
     };
 
@@ -823,35 +823,35 @@ export default function ServicesDataTable({ services, loading, refetch }) {
 
         try {
             setIsBulkActionLoading(true);
-            await axios.post('https://nexus-consults.com/api/admin/services/bulk/delete',
-                { ids: selectedServices },
+            await axios.post('https://nexus-consults.com/api/admin/projects/bulk/delete',
+                { ids: selectedProjects },
                 {
                     headers: {
                         Authorization: `Bearer ${localStorage.getItem('userToken')}`
                     }
                 }
             );
-            toast.success(`${selectedServices.length} service(s) deleted successfully`);
-            setSelectedServices([]);
+            toast.success(`${selectedProjects.length} project(s) deleted successfully`);
+            setSelectedProjects([]);
             setSelectAll(false);
             refetch();
         } catch (error) {
-            console.error('Error deleting services:', error);
-            toast.error(error.response?.data?.message || 'Failed to delete services');
+            console.error('Error deleting projects:', error);
+            toast.error(error.response?.data?.message || 'Failed to delete projects');
         } finally {
             setIsBulkActionLoading(false);
         }
     };
 
-    // Bulk update service status
+    // Bulk update project status
     const handleBulkStatusUpdate = async (status) => {
-        if (!selectedServices.length) return;
+        if (!selectedProjects.length) return;
 
         try {
             setIsBulkActionLoading(true);
-            await axios.post('https://nexus-consults.com/api/admin/services/bulk/update-status',
+            await axios.post('https://nexus-consults.com/api/admin/projects/bulk/update-status',
                 {
-                    ids: selectedServices,
+                    ids: selectedProjects,
                     status: status
                 },
                 {
@@ -860,13 +860,13 @@ export default function ServicesDataTable({ services, loading, refetch }) {
                     }
                 }
             );
-            toast.success(`Status updated for ${selectedServices.length} service(s)`);
-            setSelectedServices([]);
+            toast.success(`Status updated for ${selectedProjects.length} project(s)`);
+            setSelectedProjects([]);
             setSelectAll(false);
             refetch();
         } catch (error) {
-            console.error('Error updating service status:', error);
-            toast.error(error.response?.data?.message || 'Failed to update service status');
+            console.error('Error updating project status:', error);
+            toast.error(error.response?.data?.message || 'Failed to update project status');
         } finally {
             setIsBulkActionLoading(false);
         }
@@ -943,15 +943,15 @@ export default function ServicesDataTable({ services, loading, refetch }) {
                     type="text"
                     value={filters.global}
                     onChange={(e) => handleFilterChange('global', e.target.value)}
-                    placeholder="Search services..."
+                    placeholder="Search projects..."
                     className="px-3 py-2 rounded-xl shadow-sm focus:outline-2 focus:outline-primary w-full border border-primary transition-all"
                 />
-                {currentUser?.data?.data?.admin?.permissions?.includes('create_services') && <button
+                {currentUser?.data?.data?.admin?.permissions?.includes('create_projects') && <button
                     onClick={() => { setShowAddModal(true); resetForm() }}
                     className="bg-primary hover:bg-darkBlue transition-all text-white px-3 py-2 rounded-xl shadow-sm min-w-max flex items-center gap-2"
                 >
                     <FaPlus size={18} />
-                    <span>Add Service</span>
+                    <span>Add Project</span>
                 </button>}
             </div>
 
@@ -964,7 +964,7 @@ export default function ServicesDataTable({ services, loading, refetch }) {
                                 <div className="flex items-center">
                                     <input
                                         type="checkbox"
-                                        checked={selectAll && filteredServices.length > 0}
+                                        checked={selectAll && filteredProjects.length > 0}
                                         onChange={(e) => handleSelectAll(e.target.checked)}
                                         className="h-4 w-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
                                     />
@@ -1024,81 +1024,81 @@ export default function ServicesDataTable({ services, loading, refetch }) {
                                 <td colSpan="6" className="px-3 py-4 text-center">
                                     <div className="flex justify-center items-center gap-2">
                                         <FaSpinner className="animate-spin" size={18} />
-                                        Loading services...
+                                        Loading projects...
                                     </div>
                                 </td>
                             </tr>
-                        ) : paginatedServices.length === 0 ? (
+                        ) : paginatedProjects.length === 0 ? (
                             <tr>
                                 <td colSpan="6" className="px-3 py-4 text-center">
-                                    No services found
+                                    No projects found
                                 </td>
                             </tr>
                         ) : (
-                            paginatedServices.map((service) => (
-                                <tr key={service.id} className="hover:bg-gray-50">
+                            paginatedProjects.map((project) => (
+                                <tr key={project.id} className="hover:bg-gray-50">
                                     <td className="px-6 py-4 whitespace-nowrap">
                                         <div className="flex items-center">
                                             <input
                                                 type="checkbox"
-                                                checked={selectedServices.includes(service.id)}
-                                                onChange={(e) => handleSelectService(service.id, e.target.checked)}
+                                                checked={selectedProjects.includes(project.id)}
+                                                onChange={(e) => handleSelectproject(project.id, e.target.checked)}
                                                 className="h-4 w-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
                                             />
                                             <span className="ml-2 text-sm font-medium text-gray-900">
-                                                {service.title}
+                                                {project.title}
                                             </span>
                                         </div>
                                     </td>
                                     <td className="px-3 py-4 whitespace-nowrap">
-                                        {service.author?.name || '-'}
+                                        {project.author?.name || '-'}
                                     </td>
                                     <td className="px-3 py-4 whitespace-nowrap">
-                                        {service.cover_photo && (
+                                        {project.cover_photo && (
                                             <img
-                                                src={service.cover_photo}
+                                                src={project.cover_photo}
                                                 alt="Cover"
                                                 className="h-10 w-10 object-cover rounded"
                                             />
                                         )}
                                     </td>
                                     <td className="px-3 py-4 whitespace-nowrap">
-                                        {statusBadge(service.is_active)}
+                                        {statusBadge(project.is_active)}
                                     </td>
                                     <td className="px-3 py-4 whitespace-nowrap">
-                                        {service.created_at ? new Date(service.created_at).toLocaleDateString() : '-'}
+                                        {project.created_at ? new Date(project.created_at).toLocaleDateString() : '-'}
                                     </td>
                                     <td className="px-3 py-4 whitespace-nowrap">
                                         <div className="flex items-center gap-2">
-                                            {currentUser?.data?.data?.admin?.permissions?.includes('edit_services') && <button
+                                            {currentUser?.data?.data?.admin?.permissions?.includes('edit_projects') && <button
                                                 className="text-blue-500 hover:text-blue-700 p-1"
-                                                onClick={() => prepareEditForm(service)}
-                                                disabled={isServiceLoading}
+                                                onClick={() => prepareEditForm(project)}
+                                                disabled={isProjectLoading}
                                             >
-                                                {isServiceLoading && editingServiceId === service.id ? (
+                                                {isProjectLoading && editingProjectId === project.id ? (
                                                     <FaSpinner className="animate-spin" size={18} />
                                                 ) : (
                                                     <FaEdit size={18} />
                                                 )}
                                             </button>}
                                             <button
-                                                className={`${service.is_active ? 'text-red-500 hover:text-red-700' : 'text-green-500 hover:text-green-700'} p-1`}
-                                                onClick={() => handleToggleStatus(service.id, service.is_active)}
-                                                disabled={togglingServiceId === service.id}
+                                                className={`${project.is_active ? 'text-red-500 hover:text-red-700' : 'text-green-500 hover:text-green-700'} p-1`}
+                                                onClick={() => handleToggleStatus(project.id, project.is_active)}
+                                                disabled={togglingProjecteId === project.id}
                                             >
-                                                {togglingServiceId === service.id ? (
+                                                {togglingProjectId === project.id ? (
                                                     <FaSpinner className="animate-spin" size={18} />
                                                 ) : (
-                                                    service.is_active ? <FaTimes /> : <FaCheck />
+                                                    project.is_active ? <FaTimes /> : <FaCheck />
                                                 )}
                                             </button>
-                                            {currentUser?.data?.data?.admin?.permissions?.includes('delete_services') && <button
+                                            {currentUser?.data?.data?.admin?.permissions?.includes('delete_projects') && <button
                                                 className="text-red-500 hover:text-red-700 p-1"
-                                                onClick={() => handleDeleteClick(service.id)}
-                                                disabled={deletingServiceId === service.id}
+                                                onClick={() => handleDeleteClick(project.id)}
+                                                disabled={deletingProjectId === project.id}
                                                 title="Delete"
                                             >
-                                                {deletingServiceId === service.id ? (
+                                                {deletingProjectId === project.id ? (
                                                     <FaSpinner className="animate-spin" size={18} />
                                                 ) : (
                                                     <FaTrashAlt size={18} />
@@ -1136,7 +1136,7 @@ export default function ServicesDataTable({ services, loading, refetch }) {
                             </button>
                         </div>
                         <p className="text-gray-700 mb-6">
-                            Are you sure you want to delete {selectedServices.length} selected service(s)? This action cannot be undone.
+                            Are you sure you want to delete {selectedProjects.length} selected project(s)? This action cannot be undone.
                         </p>
                         <div className="flex justify-end gap-3">
                             <button
@@ -1166,11 +1166,11 @@ export default function ServicesDataTable({ services, loading, refetch }) {
             )}
 
             {/* Bulk Actions Toolbar */}
-            {selectedServices.length > 0 && (
+            {selectedProjects.length > 0 && (
                 <div className="bg-blue-50 p-4 rounded-md mb-6 border border-blue-200">
                     <div className="flex flex-wrap items-center gap-4">
                         <div className="text-blue-800 font-medium">
-                            {selectedServices.length} service(s) selected
+                            {selectedProjects.length} project(s) selected
                         </div>
                         <div className="flex flex-wrap gap-2">
                             <button
@@ -1199,7 +1199,7 @@ export default function ServicesDataTable({ services, loading, refetch }) {
                             </button>
                             <button
                                 onClick={() => {
-                                    setSelectedServices([]);
+                                    setSelectedProjects([]);
                                     setSelectAll(false);
                                 }}
                                 className="flex items-center px-3 py-1.5 bg-gray-200 text-gray-700 rounded hover:bg-gray-300 text-sm"
@@ -1276,7 +1276,7 @@ export default function ServicesDataTable({ services, loading, refetch }) {
                 )}
             </div>
 
-            {/* Add Service Modal */}
+            {/* Add Project Modal */}
             {showAddModal && (
                 <motion.div
                     initial={{ opacity: 0 }}
@@ -1297,8 +1297,8 @@ export default function ServicesDataTable({ services, loading, refetch }) {
                         onClick={(e) => e.stopPropagation()}
                     >
                         <div className="p-6">
-                            <h2 className="text-xl font-bold mb-4">Add New Service</h2>
-                            <form onSubmit={handleAddService}>
+                            <h2 className="text-xl font-bold mb-4">Add New Project</h2>
+                            <form onSubmit={handleAddProject}>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700 mb-1">Title*</label>
@@ -1442,7 +1442,7 @@ export default function ServicesDataTable({ services, loading, refetch }) {
 
                                 <div className="flex justify-end gap-3 mt-6">
                                     <div className="text-xs text-gray-500 mt-2 flex items-center">
-                                        <FaSpinner className={`animate-spin mr-1 ${updatingService ? 'opacity-100' : 'opacity-0'}`} size={12} />
+                                        <FaSpinner className={`animate-spin mr-1 ${updatingProject ? 'opacity-100' : 'opacity-0'}`} size={12} />
                                         Auto-saves to drafts every 5s
                                     </div>
                                     <button
@@ -1467,9 +1467,9 @@ export default function ServicesDataTable({ services, loading, refetch }) {
                                     <button
                                         type="submit"
                                         className="px-4 py-2 bg-primary text-white rounded-md hover:bg-darkBlue transition-all flex items-center justify-center gap-2"
-                                        disabled={updatingService}
+                                        disabled={updatingProject}
                                     >
-                                        {updatingService ? (
+                                        {updatingProject ? (
                                             <>
                                                 <FaSpinner className="animate-spin" size={18} />
                                                 <span>Adding...</span>
@@ -1477,7 +1477,7 @@ export default function ServicesDataTable({ services, loading, refetch }) {
                                         ) : (
                                             <>
                                                 <FaPlus size={18} />
-                                                <span>Add Service</span>
+                                                <span>Add Project</span>
                                             </>
                                         )}
                                     </button>
@@ -1488,7 +1488,7 @@ export default function ServicesDataTable({ services, loading, refetch }) {
                 </motion.div>
             )}
 
-            {/* Edit Service Modal */}
+            {/* Edit Project Modal */}
             {showEditModal && (
                 <motion.div
                     initial={{ opacity: 0 }}
@@ -1497,7 +1497,7 @@ export default function ServicesDataTable({ services, loading, refetch }) {
                     className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
                     onClick={() => {
                         setShowEditModal(false);
-                        setEditingServiceId(null);
+                        setEditingProjectId(null);
                     }}
                 >
                     <motion.div
@@ -1513,31 +1513,31 @@ export default function ServicesDataTable({ services, loading, refetch }) {
                                     type="button"
                                     onClick={() => {
                                         setShowEditModal(false);
-                                        setEditingServiceId(null);
+                                        setEditingProjectId(null);
                                     }}
                                     className="text-blue-600 hover:text-blue-800 font-medium"
                                 >
-                                    Services
+                                    Projects
                                 </button>
                                 <span className="mx-2 text-gray-400">{'>'}</span>
                                 <span className="text-xl font-bold text-gray-900">
-                                    {editFormData.title || 'Untitled Service'}
+                                    {editFormData.title || 'Untitled Project'}
                                 </span>
-                                {isServiceLoading && (
+                                {isProjectLoading && (
                                     <div className="ml-4 flex items-center text-sm text-gray-500">
                                         <FaSpinner className="animate-spin mr-2" size={14} />
-                                        Loading service data...
+                                        Loading project data...
                                     </div>
                                 )}
                             </div>
 
-                            {isServiceLoading ? (
+                            {isProjectLoading ? (
                                 <div className="flex justify-center items-center py-8">
                                     <FaSpinner className="animate-spin mr-2" size={24} />
-                                    <span>Loading service data...</span>
+                                    <span>Loading project data...</span>
                                 </div>
                             ) : (
-                                <form onSubmit={handleUpdateService}>
+                                <form onSubmit={handleUpdateProject}>
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                                         <div>
                                             <label className="block text-sm font-medium text-gray-700 mb-1">Title*</label>
@@ -1716,7 +1716,7 @@ export default function ServicesDataTable({ services, loading, refetch }) {
                                             type="button"
                                             onClick={() => {
                                                 setShowEditModal(false);
-                                                setEditingServiceId(null);
+                                                setEditingProjectId(null);
                                             }}
                                             className="px-4 py-2 border rounded-md text-gray-700 hover:bg-gray-50"
                                         >
@@ -1725,9 +1725,9 @@ export default function ServicesDataTable({ services, loading, refetch }) {
                                         <button
                                             type="submit"
                                             className="px-4 py-2 bg-primary text-white rounded-md hover:bg-darkBlue transition-all flex items-center justify-center gap-2"
-                                            disabled={updatingService}
+                                            disabled={updatingProject}
                                         >
-                                            {updatingService ? (
+                                            {updatingProject ? (
                                                 <>
                                                     <FaSpinner className="animate-spin" size={18} />
                                                     <span>Updating...</span>
@@ -1735,7 +1735,7 @@ export default function ServicesDataTable({ services, loading, refetch }) {
                                             ) : (
                                                 <>
                                                     <FaCheck size={18} />
-                                                    <span>Update Service</span>
+                                                    <span>Update Project</span>
                                                 </>
                                             )}
                                         </button>
@@ -1769,10 +1769,10 @@ export default function ServicesDataTable({ services, loading, refetch }) {
                                     <FaTrashAlt className="h-5 w-5 text-red-600" />
                                 </div>
                                 <div className="ml-4">
-                                    <h3 className="text-lg font-medium text-gray-900">Delete Service</h3>
+                                    <h3 className="text-lg font-medium text-gray-900">Delete Project</h3>
                                     <div className="mt-2">
                                         <p className="text-sm text-gray-500">
-                                            Are you sure you want to delete this service? This action cannot be undone.
+                                            Are you sure you want to delete this project? This action cannot be undone.
                                         </p>
                                     </div>
                                 </div>

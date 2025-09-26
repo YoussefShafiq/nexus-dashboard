@@ -10,6 +10,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import Notfound from './Components/Notfound'
 import Services from './Components/Pages/Services'
 import Home from './Components/Pages/Home'
+import Projects from './Components/Pages/Projects'
 
 function App() {
 
@@ -19,6 +20,7 @@ function App() {
       path: '/', element: <ProtectedRoute><Layout /></ProtectedRoute>, children: [
         { index: true, element: <ProtectedRoute><Home /></ProtectedRoute> },
         { path: '/services', element: <ProtectedRoute><Services /></ProtectedRoute> },
+        { path: '/projects', element: <ProtectedRoute><Projects /></ProtectedRoute> },
 
       ]
     },
