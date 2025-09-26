@@ -307,7 +307,7 @@ export default function ServicesDataTable({ services, loading, refetch }) {
         } else {
             if (addAutoSaveInterval.current) clearInterval(addAutoSaveInterval.current);
         }
-    }, [showAddModal, formData]);
+    }, [showAddModal]);
 
     // Function to generate slug from title
     const generateSlug = (title) => {
@@ -663,6 +663,9 @@ export default function ServicesDataTable({ services, loading, refetch }) {
                 formDataToSend.append('image3', editFormData.image3);
             }
 
+            console.log(editFormData);
+
+
             await axios.post(
                 `https://nexus-consults.com/api/admin/services/${editFormData.id}`,
                 formDataToSend,
@@ -873,9 +876,8 @@ export default function ServicesDataTable({ services, loading, refetch }) {
     };
 
     // Image upload component
-    const ImageUpload = ({ name, label, existingImage, onImageChange, onRemoveImage }) => {
-        const currentImage = editFormData[`${name}`] || formData[name];
-        const existingImageUrl = showEditModal ? editFormData[`existing_${name}`] || existingImage : existingImage;
+    const ImageUpload = React.memo(({ name, label, existingImage, currentImage, onImageChange, onRemoveImage }) => {
+        const existingImageUrl = existingImage;
 
         return (
             <div className="mb-4">
@@ -886,11 +888,15 @@ export default function ServicesDataTable({ services, loading, refetch }) {
                             src={URL.createObjectURL(currentImage)}
                             alt="Preview"
                             className="h-48 w-full object-cover rounded-lg"
+                            onLoad={(e) => {
+                                // Clean up the object URL after the image loads to prevent memory leaks
+                                setTimeout(() => URL.revokeObjectURL(e.target.src), 100);
+                            }}
                         />
                         <button
                             type="button"
                             onClick={() => onRemoveImage(name)}
-                            className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-2"
+                            className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-2 hover:bg-red-600 transition-colors"
                         >
                             <FaTimes size={16} />
                         </button>
@@ -933,7 +939,7 @@ export default function ServicesDataTable({ services, loading, refetch }) {
                 )}
             </div>
         );
-    };
+    });
 
     return (
         <div className="shadow-2xl rounded-2xl overflow-hidden bg-white">
@@ -1346,6 +1352,7 @@ export default function ServicesDataTable({ services, loading, refetch }) {
                                 <ImageUpload
                                     name="cover_photo"
                                     label="Cover Photo"
+                                    currentImage={formData.cover_photo}
                                     onImageChange={handleFormChange}
                                     onRemoveImage={(name) => setFormData(prev => ({ ...prev, [name]: null }))}
                                 />
@@ -1398,6 +1405,7 @@ export default function ServicesDataTable({ services, loading, refetch }) {
                                         <ImageUpload
                                             name="image1"
                                             label="Image 1"
+                                            currentImage={formData.image1}
                                             onImageChange={handleFormChange}
                                             onRemoveImage={(name) => setFormData(prev => ({ ...prev, [name]: null }))}
                                         />
@@ -1416,6 +1424,7 @@ export default function ServicesDataTable({ services, loading, refetch }) {
                                         <ImageUpload
                                             name="image2"
                                             label="Image 2"
+                                            currentImage={formData.image2}
                                             onImageChange={handleFormChange}
                                             onRemoveImage={(name) => setFormData(prev => ({ ...prev, [name]: null }))}
                                         />
@@ -1434,6 +1443,7 @@ export default function ServicesDataTable({ services, loading, refetch }) {
                                         <ImageUpload
                                             name="image3"
                                             label="Image 3"
+                                            currentImage={formData.image3}
                                             onImageChange={handleFormChange}
                                             onRemoveImage={(name) => setFormData(prev => ({ ...prev, [name]: null }))}
                                         />
@@ -1586,6 +1596,7 @@ export default function ServicesDataTable({ services, loading, refetch }) {
                                         name="cover_photo"
                                         label="Cover Photo"
                                         existingImage={editFormData.existing_cover_photo}
+                                        currentImage={editFormData.cover_photo}
                                         onImageChange={handleEditFormChange}
                                         onRemoveImage={(name) => {
                                             if (name.startsWith('existing_')) {
@@ -1646,6 +1657,7 @@ export default function ServicesDataTable({ services, loading, refetch }) {
                                                 name="image1"
                                                 label="Image 1"
                                                 existingImage={editFormData.existing_image1}
+                                                currentImage={editFormData.image1}
                                                 onImageChange={handleEditFormChange}
                                                 onRemoveImage={(name) => {
                                                     if (name.startsWith('existing_')) {
@@ -1672,6 +1684,7 @@ export default function ServicesDataTable({ services, loading, refetch }) {
                                                 name="image2"
                                                 label="Image 2"
                                                 existingImage={editFormData.existing_image2}
+                                                currentImage={editFormData.image2}
                                                 onImageChange={handleEditFormChange}
                                                 onRemoveImage={(name) => {
                                                     if (name.startsWith('existing_')) {
@@ -1698,6 +1711,7 @@ export default function ServicesDataTable({ services, loading, refetch }) {
                                                 name="image3"
                                                 label="Image 3"
                                                 existingImage={editFormData.existing_image3}
+                                                currentImage={editFormData.image3}
                                                 onImageChange={handleEditFormChange}
                                                 onRemoveImage={(name) => {
                                                     if (name.startsWith('existing_')) {
