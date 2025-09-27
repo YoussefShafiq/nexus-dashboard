@@ -607,18 +607,12 @@ export default function ProjectsDataTable({ projects, loading, refetch }) {
                 formDataToSend.append('tags[]', tag);
             });
 
-            if (formData.cover_photo) {
-                formDataToSend.append('cover_photo', formData.cover_photo);
-            }
-            if (formData.image1) {
-                formDataToSend.append('image1', formData.image1);
-            }
-            if (formData.image2) {
-                formDataToSend.append('image2', formData.image2);
-            }
-            if (formData.image3) {
-                formDataToSend.append('image3', formData.image3);
-            }
+
+
+            formDataToSend.append('cover_photo', formData.cover_photo || '');
+            formDataToSend.append('image1', formData.image1 || '');
+            formDataToSend.append('image2', formData.image2 || '');
+            formDataToSend.append('image3', formData.image3 || '');
 
             formDataToSend.append('description', formData.description);
 
@@ -673,18 +667,10 @@ export default function ProjectsDataTable({ projects, loading, refetch }) {
                 formDataToSend.append('tags[]', tag);
             });
 
-            if (editFormData.cover_photo) {
-                formDataToSend.append('cover_photo', editFormData.cover_photo);
-            }
-            if (editFormData.image1) {
-                formDataToSend.append('image1', editFormData.image1);
-            }
-            if (editFormData.image2) {
-                formDataToSend.append('image2', editFormData.image2);
-            }
-            if (editFormData.image3) {
-                formDataToSend.append('image3', editFormData.image3);
-            }
+            formDataToSend.append('cover_photo', editFormData.cover_photo || '');
+            formDataToSend.append('image1', editFormData.image1 || '');
+            formDataToSend.append('image2', editFormData.image2 || '');
+            formDataToSend.append('image3', editFormData.image3 || '');
 
             await axios.post(
                 `https://nexus-consults.com/api/admin/projects/${editFormData.id}`,
