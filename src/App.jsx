@@ -12,6 +12,8 @@ import Services from './Components/Pages/Services'
 import Home from './Components/Pages/Home'
 import Projects from './Components/Pages/Projects'
 import Admins from './Components/Pages/Admins'
+import Blogs from './Components/Pages/Blogs'
+import Jobs from './Components/Pages/Jobs'
 
 function App() {
 
@@ -23,6 +25,8 @@ function App() {
         { path: '/services', element: <ProtectedRoute><Services /></ProtectedRoute> },
         { path: '/projects', element: <ProtectedRoute><Projects /></ProtectedRoute> },
         { path: '/admins', element: <ProtectedRoute><Admins /></ProtectedRoute> },
+        { path: '/blogs', element: <ProtectedRoute><Blogs /></ProtectedRoute> },
+        { path: '/jobs', element: <ProtectedRoute><Jobs /></ProtectedRoute> },
 
       ]
     },

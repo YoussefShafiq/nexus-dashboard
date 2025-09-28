@@ -84,6 +84,18 @@ export default function Sidebar() {
             icon: <IoLinkOutline />,
             permission: "view_projects"
         },
+        {
+            title: 'Blogs',
+            path: '/blogs',
+            icon: <IoLinkOutline />,
+            permission: ""
+        },
+        {
+            title: 'Jobs',
+            path: '/jobs',
+            icon: <IoLinkOutline />,
+            permission: "view_jobs"
+        },
 
     ]
     return <>
