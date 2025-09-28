@@ -14,6 +14,7 @@ import Projects from './Components/Pages/Projects'
 import Admins from './Components/Pages/Admins'
 import Blogs from './Components/Pages/Blogs'
 import Jobs from './Components/Pages/Jobs'
+import JobsApplications from './Components/Pages/JobsApplications'
 
 function App() {
 
@@ -27,6 +28,7 @@ function App() {
         { path: '/admins', element: <ProtectedRoute><Admins /></ProtectedRoute> },
         { path: '/blogs', element: <ProtectedRoute><Blogs /></ProtectedRoute> },
         { path: '/jobs', element: <ProtectedRoute><Jobs /></ProtectedRoute> },
+        { path: '/jobs-applications', element: <ProtectedRoute><JobsApplications /></ProtectedRoute> },
 
       ]
     },

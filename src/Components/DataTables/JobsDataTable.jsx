@@ -543,7 +543,7 @@ export default function JobsDataTable({ jobs, loading, refetch }) {
 
         setUpdatingJob(true);
         try {
-            await axios.put(
+            await axios.post(
                 `https://nexus-consults.com/api/admin/jobs/${editFormData.id}`,
                 editFormData,
                 {

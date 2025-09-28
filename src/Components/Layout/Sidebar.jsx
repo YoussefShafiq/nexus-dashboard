@@ -70,7 +70,7 @@ export default function Sidebar() {
             title: 'Admins',
             path: '/admins',
             icon: <IoLinkOutline />,
-            permission: ""
+            permission: "view_admins"
         },
         {
             title: 'Services',
@@ -88,13 +88,19 @@ export default function Sidebar() {
             title: 'Blogs',
             path: '/blogs',
             icon: <IoLinkOutline />,
-            permission: ""
+            permission: "view_blogs"
         },
         {
             title: 'Jobs',
             path: '/jobs',
             icon: <IoLinkOutline />,
             permission: "view_jobs"
+        },
+        {
+            title: 'Jobs Applications',
+            path: '/jobs-applications',
+            icon: <IoLinkOutline />,
+            permission: ""
         },
 
     ]
