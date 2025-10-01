@@ -699,7 +699,7 @@ export default function BlogsDataTable({ blogs, loading, refetch }) {
             editFormData.tags.forEach(skill => {
                 formDataToSend.append('tags[]', skill);
             });
-            formDataToSend.append('_method', 'POST');
+            formDataToSend.append('_method', 'put');
             if (editFormData.cover_photo) {
                 formDataToSend.append('cover_photo', editFormData.cover_photo);
             }
@@ -899,8 +899,7 @@ export default function BlogsDataTable({ blogs, loading, refetch }) {
 
     const categoryBadge = (category) => {
         const categories = {
-            'guides': 'bg-blue-100 text-blue-800',
-            'insights': 'bg-purple-100 text-purple-800',
+            'news': 'bg-blue-100 text-blue-800',
             'trending': 'bg-pink-100 text-pink-800'
         };
         return (
@@ -1195,8 +1194,7 @@ export default function BlogsDataTable({ blogs, loading, refetch }) {
                                     className="text-xs p-1 border rounded w-full"
                                 >
                                     <option value="">All Categories</option>
-                                    <option value="guides">Guides</option>
-                                    <option value="insights">Insights</option>
+                                    <option value="news">News</option>
                                     <option value="trending">Trending</option>
                                 </select>
                             </th>
@@ -1296,13 +1294,13 @@ export default function BlogsDataTable({ blogs, loading, refetch }) {
                                     </td>
                                     <td className="px-3 py-4 whitespace-nowrap">
                                         <div className="flex items-center gap-2">
-                                            {currentUser?.data?.data?.admin?.permissions?.includes('edit_blog') && <button
+                                            {currentUser?.data?.data?.admin?.permissions?.includes('edit_blogs') && <button
                                                 className="text-blue-500 hover:text-blue-700 p-1"
                                                 onClick={() => prepareEditForm(blog)}
                                             >
                                                 <FaEdit size={18} />
                                             </button>}
-                                            {currentUser?.data?.data?.admin?.permissions?.includes('toggle_blog_status') && <button
+                                            {currentUser?.data?.data?.admin?.permissions?.includes('edit_blogs') && <button
                                                 className={`${blog.is_active ? 'text-red-500 hover:text-red-700' : 'text-green-500 hover:text-green-700'} p-1`}
                                                 onClick={() => handleToggleStatus(blog.id, blog.is_active)}
                                                 disabled={togglingBlogId === blog.id}
@@ -1313,7 +1311,7 @@ export default function BlogsDataTable({ blogs, loading, refetch }) {
                                                     blog.is_active ? <FaTimes /> : <FaCheck />
                                                 )}
                                             </button>}
-                                            {currentUser?.data?.data?.admin?.permissions?.includes('delete_blog') && <button
+                                            {currentUser?.data?.data?.admin?.permissions?.includes('delete_blogs') && <button
                                                 className="text-red-500 hover:text-red-700 p-1"
                                                 onClick={() => handleDeleteClick(blog.id)}
                                                 disabled={deletingBlogId === blog.id}
@@ -1563,8 +1561,7 @@ export default function BlogsDataTable({ blogs, loading, refetch }) {
                                             className="w-full px-3 py-2 border rounded-md"
                                             required
                                         >
-                                            <option value="guides">Guides</option>
-                                            <option value="insights">Insights</option>
+                                            <option value="news">News</option>
                                             <option value="trending">Trending</option>
                                         </select>
                                     </div>
@@ -1782,8 +1779,7 @@ export default function BlogsDataTable({ blogs, loading, refetch }) {
                                             className="w-full px-3 py-2 border rounded-md"
                                             required
                                         >
-                                            <option value="guides">Guides</option>
-                                            <option value="insights">Insights</option>
+                                            <option value="news">News</option>
                                             <option value="trending">Trending</option>
                                         </select>
                                     </div>

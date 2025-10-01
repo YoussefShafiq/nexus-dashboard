@@ -334,13 +334,13 @@ export default function AdminsDataTable({ admins, allPermissions, loading, refet
         currentPage * rowsPerPage
     );
 
-    const statusBadge = (status) => {
-        const statusClass = status === 'active'
+    const statusBadge = (is_active) => {
+        const statusClass = is_active
             ? 'bg-[#009379] text-white'
             : 'bg-[#930002] text-white';
         return (
             <span className={`flex justify-center w-fit items-center px-2.5 py-1 rounded-md text-xs font-medium ${statusClass} min-w-16 text-center`}>
-                {status === 'active' ? 'Active' : 'Inactive'}
+                {is_active ? 'Active' : 'Inactive'}
             </span>
         );
     };
@@ -465,7 +465,7 @@ export default function AdminsDataTable({ admins, allPermissions, loading, refet
                                         {admin.role}
                                     </td>
                                     <td className="px-3 py-4 whitespace-nowrap">
-                                        {statusBadge(admin.status)}
+                                        {statusBadge(admin.is_active)}
                                     </td>
                                     <td className="px-3 py-4 whitespace-nowrap">
                                         <div className="flex items-center gap-2">
