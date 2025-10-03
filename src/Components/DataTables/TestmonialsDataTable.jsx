@@ -29,6 +29,7 @@ import {
 } from 'react-icons/fa';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
+import { XCircle } from 'lucide-react';
 
 export default function TestmonialsDataTable({ testmonialsData, loading, refetch }) {
     const navigate = useNavigate();
@@ -803,8 +804,12 @@ export default function TestmonialsDataTable({ testmonialsData, loading, refetch
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
                     className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
-                    onClick={() => setShowAddEditModal(false)}
                 >
+                    <button onClick={() => {
+                        setShowAddEditModal(false);
+                    }} className='fixed top-5 right-5 text-red-500 backdrop-blur-lg rounded-full z-50' >
+                        <XCircle className='' size={40} />
+                    </button>
                     <motion.div
                         initial={{ scale: 0.9, opacity: 0 }}
                         animate={{ scale: 1, opacity: 1 }}

@@ -31,6 +31,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import localforage from 'localforage';
 import DateRangePicker from '../ReusableComponents/DateRangePicker';
+import { XCircle } from 'lucide-react';
 
 export default function BlogsDataTable({ blogs, loading, refetch }) {
     const navigate = useNavigate();
@@ -81,7 +82,7 @@ export default function BlogsDataTable({ blogs, loading, refetch }) {
     const [formData, setFormData] = useState({
         title: '',
         slug: '',
-        category: 'guides',
+        category: 'news',
         is_active: true,
         mark_as_hero: false,
         content: '',
@@ -94,7 +95,7 @@ export default function BlogsDataTable({ blogs, loading, refetch }) {
         id: null,
         title: '',
         slug: '',
-        category: 'guides',
+        category: 'news',
         is_active: true,
         mark_as_hero: false,
         content: '',
@@ -337,7 +338,7 @@ export default function BlogsDataTable({ blogs, loading, refetch }) {
         setFormData({
             title: draft.title || '',
             slug: draft.slug || '',
-            category: draft.category || 'guides',
+            category: draft.category || 'news',
             is_active: draft.is_active ?? true,
             mark_as_hero: draft.mark_as_hero ?? false,
             content: draft.content || '',
@@ -595,7 +596,7 @@ export default function BlogsDataTable({ blogs, loading, refetch }) {
         setFormData({
             title: '',
             slug: '',
-            category: 'guides',
+            category: 'news',
             is_active: true,
             mark_as_hero: true,
             content: '',
@@ -1522,20 +1523,23 @@ export default function BlogsDataTable({ blogs, loading, refetch }) {
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
                     className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 "
-                    onClick={() => {
-                        // Ensure we keep user's work in a draft when closing modal by clicking overlay
-                        const draft = makeDraftFromForm();
-                        if (draft) upsertDraft(draft);
-                        setShowAddModal(false);
-                    }}
+
                 >
+                    <button onClick={() => {
+                        setShowAddModal(false); const draft = makeDraftFromForm();
+                        if (draft) upsertDraft(draft);
+                    }} className='fixed top-5 right-5 text-red-500 backdrop-blur-lg rounded-full z-50' >
+                        <XCircle className='' size={40} />
+                    </button>
                     <motion.div
                         initial={{ y: -50, opacity: 0 }}
                         animate={{ y: 0, opacity: 1 }}
                         exit={{ y: 50, opacity: 0 }}
-                        className="bg-white rounded-lg shadow-xl w-full  h-[100vh] overflow-y-auto"
+                        className="bg-white rounded-lg shadow-xl w-5/6  h-[90vh] overflow-y-auto"
                         onClick={(e) => e.stopPropagation()}
                     >
+                        <div className="">
+                        </div>
                         <div className="p-6">
                             <h2 className="text-xl font-bold mb-4">Add New Blog</h2>
                             <form onSubmit={handleAddBlog}>
@@ -1733,13 +1737,17 @@ export default function BlogsDataTable({ blogs, loading, refetch }) {
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
                     className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
-                    onClick={() => setShowEditModal(false)}
                 >
+                    <button onClick={() => {
+                        setShowEditModal(false);
+                    }} className='fixed top-5 right-5 text-red-500 backdrop-blur-lg rounded-full z-50' >
+                        <XCircle className='' size={40} />
+                    </button>
                     <motion.div
                         initial={{ y: -50, opacity: 0 }}
                         animate={{ y: 0, opacity: 1 }}
                         exit={{ y: 50, opacity: 0 }}
-                        className="bg-white rounded-lg shadow-xl w-full h-[100vh] overflow-y-auto"
+                        className="bg-white rounded-lg shadow-xl w-5/6 h-[90vh] overflow-y-auto"
                         onClick={(e) => e.stopPropagation()}
                     >
                         <div className="p-6">

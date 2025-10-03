@@ -16,6 +16,7 @@ import {
     FaLockOpen
 } from 'react-icons/fa';
 import { useQuery } from '@tanstack/react-query';
+import { XCircle } from 'lucide-react';
 
 export default function AdminsDataTable({ admins, allPermissions, loading, refetch }) {
     const navigate = useNavigate();
@@ -527,8 +528,12 @@ export default function AdminsDataTable({ admins, allPermissions, loading, refet
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
                     className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
-                    onClick={() => setShowAddModal(false)}
                 >
+                    <button onClick={() => {
+                        setShowAddModal(false);
+                    }} className='fixed top-5 right-5 text-red-500 backdrop-blur-lg rounded-full z-50' >
+                        <XCircle className='' size={40} />
+                    </button>
                     <motion.div
                         initial={{ y: -50, opacity: 0 }}
                         animate={{ y: 0, opacity: 1 }}
@@ -676,8 +681,12 @@ export default function AdminsDataTable({ admins, allPermissions, loading, refet
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
                     className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
-                    onClick={() => setShowEditModal(false)}
                 >
+                    <button onClick={() => {
+                        setShowEditModal(false);
+                    }} className='fixed top-5 right-5 text-red-500 backdrop-blur-lg rounded-full z-50' >
+                        <XCircle className='' size={40} />
+                    </button>
                     <motion.div
                         initial={{ y: -50, opacity: 0 }}
                         animate={{ y: 0, opacity: 1 }}
@@ -778,8 +787,12 @@ export default function AdminsDataTable({ admins, allPermissions, loading, refet
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
                     className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
-                    onClick={() => setShowPermissionsModal(false)}
                 >
+                    <button onClick={() => {
+                        setShowPermissionsModal(false);
+                    }} className='fixed top-5 right-5 text-red-500 backdrop-blur-lg rounded-full z-50' >
+                        <XCircle className='' size={40} />
+                    </button>
                     <motion.div
                         initial={{ y: -50, opacity: 0 }}
                         animate={{ y: 0, opacity: 1 }}

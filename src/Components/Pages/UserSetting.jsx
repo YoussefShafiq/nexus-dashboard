@@ -221,9 +221,6 @@ export default function UserSetting() {
                         <div className="ml-6">
                             <h2 className="text-xl font-semibold">{currentUser?.data?.data?.admin?.name}</h2>
                             <p className="text-gray-600">{currentUser?.data?.data?.admin?.email}</p>
-                            <p className="text-sm text-gray-500 mt-1">
-                                Member since: {new Date(currentUser?.data?.data?.admin?.created_at).toLocaleDateString()}
-                            </p>
                         </div>
                     </div>
 

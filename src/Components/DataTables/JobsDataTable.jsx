@@ -23,6 +23,7 @@ import DateRangePicker from '../ReusableComponents/DateRangePicker';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import localforage from 'localforage';
+import { XCircle } from 'lucide-react';
 
 export default function JobsDataTable({ jobs, loading, refetch }) {
     const navigate = useNavigate();
@@ -1148,12 +1149,14 @@ export default function JobsDataTable({ jobs, loading, refetch }) {
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
                     className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 "
-                    onClick={() => {
-                        const draft = makeDraftFromForm();
-                        if (draft) upsertDraft(draft);
-                        setShowAddModal(false);
-                    }}
+
                 >
+                    <button onClick={() => {
+                        setShowAddModal(false); const draft = makeDraftFromForm();
+                        if (draft) upsertDraft(draft);
+                    }} className='fixed top-5 right-5 text-red-500 backdrop-blur-lg rounded-full z-50' >
+                        <XCircle className='' size={40} />
+                    </button>
                     <motion.div
                         initial={{ y: -50, opacity: 0 }}
                         animate={{ y: 0, opacity: 1 }}
@@ -1327,11 +1330,13 @@ export default function JobsDataTable({ jobs, loading, refetch }) {
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
                     className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
-                    onClick={() => {
-                        setShowEditModal(false);
-                        setEditingJobId(null);
-                    }}
+
                 >
+                    <button onClick={() => {
+                        setShowEditModal(false); setEditingJobId(null);
+                    }} className='fixed top-5 right-5 text-red-500 backdrop-blur-lg rounded-full z-50' >
+                        <XCircle className='' size={40} />
+                    </button>
                     <motion.div
                         initial={{ y: -50, opacity: 0 }}
                         animate={{ y: 0, opacity: 1 }}

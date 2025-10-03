@@ -26,6 +26,7 @@ import {
 import DateRangePicker from '../ReusableComponents/DateRangePicker';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
+import { XCircle } from 'lucide-react';
 
 export default function JobsApplicationsDataTable({ applications, loading, refetch }) {
     const navigate = useNavigate();
@@ -814,8 +815,12 @@ export default function JobsApplicationsDataTable({ applications, loading, refet
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
                     className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
-                    onClick={() => setShowStatusModal(false)}
                 >
+                    <button onClick={() => {
+                        setShowStatusModal(false);
+                    }} className='fixed top-5 right-5 text-red-500 backdrop-blur-lg rounded-full z-50' >
+                        <XCircle className='' size={40} />
+                    </button>
                     <motion.div
                         initial={{ scale: 0.9, opacity: 0 }}
                         animate={{ scale: 1, opacity: 1 }}
@@ -885,8 +890,12 @@ export default function JobsApplicationsDataTable({ applications, loading, refet
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
                     className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
-                    onClick={() => setShowNotesModal(false)}
                 >
+                    <button onClick={() => {
+                        setShowNotesModal(false);
+                    }} className='fixed top-5 right-5 text-red-500 backdrop-blur-lg rounded-full z-50' >
+                        <XCircle className='' size={40} />
+                    </button>
                     <motion.div
                         initial={{ scale: 0.9, opacity: 0 }}
                         animate={{ scale: 1, opacity: 1 }}
