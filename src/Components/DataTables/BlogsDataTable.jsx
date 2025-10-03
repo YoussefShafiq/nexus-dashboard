@@ -1323,13 +1323,13 @@ export default function BlogsDataTable({ blogs, loading, refetch }) {
                                                     <FaTrashAlt size={18} />
                                                 )}
                                             </button>}
-                                            <button
+                                            {/* <button
                                                 className="text-blue-500 hover:text-blue-700 p-1"
                                                 onClick={() => handleOpenFaqModal(blog.id)}
                                                 title="Manage FAQs"
                                             >
                                                 <FaQuestionCircle size={18} />
-                                            </button>
+                                            </button> */}
                                             <button
                                                 className="text-green-500 hover:text-green-700 p-1"
                                                 onClick={() => setPreviewBlog(blog)}
