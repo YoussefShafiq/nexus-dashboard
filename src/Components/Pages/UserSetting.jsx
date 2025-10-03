@@ -364,7 +364,7 @@ export default function UserSetting() {
                 <div className="bg-white rounded-xl shadow-lg p-6">
                     <h2 className="text-2xl font-bold mb-6">Permissions</h2>
                     <div className="flex flex-wrap gap-3">
-                        {currentUser?.data?.data?.permissions?.map((p, i) => (
+                        {currentUser?.data?.data?.admin?.permissions?.map((p, i) => (
                             <div key={i} className="bg-gray-100 shadow p-1 rounded-xl">{p.replaceAll('_', ' ')}</div>
                         ))}
                     </div>

@@ -602,7 +602,7 @@ export default function TestmonialsDataTable({ testmonialsData, loading, refetch
                                     <td className="px-3 py-4 whitespace-nowrap">
                                         <div className="text-sm text-gray-900">
                                             {testmonial.title}
-                                    </div>
+                                        </div>
                                     </td>
                                     <td className="px-3 py-4">
                                         <div className="text-sm text-gray-900 line-clamp-2 max-w-xs">
