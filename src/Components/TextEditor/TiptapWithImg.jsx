@@ -2537,7 +2537,7 @@ const TiptapWithImg = ({
     content = '',
     onUpdate,
     onHeadingsUpdate,
-    uploadImgUrl = 'https://api.nexus.com/api/admin/blogs/images/upload',
+    uploadImgUrl = 'https://nexus-consults.com/api/admin/blogs/upload-content-image',
     uploadVideoUrl = 'https://api.nexus.com/api/admin/blog-media/upload-video',
     processYoutubeUrl = 'https://api.nexus.com/api/admin/blog-media/process-youtube'
 }) => {
