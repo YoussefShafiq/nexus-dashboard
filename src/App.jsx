@@ -15,6 +15,9 @@ import Admins from './Components/Pages/Admins'
 import Blogs from './Components/Pages/Blogs'
 import Jobs from './Components/Pages/Jobs'
 import JobsApplications from './Components/Pages/JobsApplications'
+import Testmonials from './Components/Pages/Testmonials'
+import AboutUs from './Components/Pages/AboutUs'
+import UserSetting from './Components/Pages/UserSetting'
 
 function App() {
 
@@ -29,6 +32,9 @@ function App() {
         { path: '/blogs', element: <ProtectedRoute><Blogs /></ProtectedRoute> },
         { path: '/jobs', element: <ProtectedRoute><Jobs /></ProtectedRoute> },
         { path: '/jobs-applications', element: <ProtectedRoute><JobsApplications /></ProtectedRoute> },
+        { path: '/testmonials', element: <ProtectedRoute><Testmonials /></ProtectedRoute> },
+        { path: '/about-us', element: <ProtectedRoute><AboutUs /></ProtectedRoute> },
+        { path: '/user-setting', element: <ProtectedRoute><UserSetting /></ProtectedRoute> },
 
       ]
     },

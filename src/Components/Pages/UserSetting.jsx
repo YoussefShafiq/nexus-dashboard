@@ -26,7 +26,7 @@ export default function UserSetting() {
     const { data: currentUser, isLoading: isCurrentUserLoading } = useQuery({
         queryKey: ['currentUser'],
         queryFn: () => {
-            return axios.get('https://api.propxpro.com/api/auth/me', {
+            return axios.get('https://nexus-consults.com/api/admin/auth/profile', {
                 headers: {
                     Authorization: `Bearer ${localStorage.getItem('userToken')}`
                 }
@@ -36,17 +36,17 @@ export default function UserSetting() {
 
     // Populate form with current user data when entering edit mode
     useEffect(() => {
-        if (isEditing && currentUser?.data?.data?.user) {
-            setValue('name', currentUser.data.data.user.name);
-            setValue('email', currentUser.data.data.user.email);
-            setValue('bio', currentUser.data.data.user.bio || ''); // Set bio value, default to empty string if not exists
+        if (isEditing && currentUser?.data?.data?.admin) {
+            setValue('name', currentUser.data.data.admin.name);
+            setValue('email', currentUser.data.data.admin.email);
+            setValue('bio', currentUser.data.data.admin.bio || ''); // Set bio value, default to empty string if not exists
         }
     }, [isEditing, currentUser, setValue]);
 
     // Send verification code mutation
     const sendVerificationMutation = useMutation({
         mutationFn: async () => {
-            return axios.post('https://api.propxpro.com/api/admin/settings/request-update', {}, {
+            return axios.post('https://nexus-consults.com/api/admin/auth/settings/request-update', {}, {
                 headers: {
                     'Authorization': `Bearer ${localStorage.getItem('userToken')}`
                 }
@@ -77,7 +77,7 @@ export default function UserSetting() {
                 data.append('profile_image', selectedFile);
             }
 
-            return axios.post('https://api.propxpro.com/api/admin/settings/confirm-update', data, {
+            return axios.post('https://nexus-consults.com/api/admin/auth/settings/confirm-update', data, {
                 headers: {
                     'Authorization': `Bearer ${localStorage.getItem('userToken')}`,
                     'Content-Type': 'multipart/form-data'
@@ -193,14 +193,14 @@ export default function UserSetting() {
 
     return (
         <div className="mx-auto p-6">
-            <h1 className="text-3xl font-bold text-gray-800 mb-8">Welcome {currentUser?.data?.data?.user?.name.split(' ')[0]}</h1>
+            <h1 className="text-3xl font-bold text-gray-800 mb-8">Welcome {currentUser?.data?.data?.admin?.name.split(' ')[0]}</h1>
 
             <div className="flex flex-col gap-8">
                 <div className="bg-white rounded-xl shadow-lg p-6">
                     <div className="flex items-center mb-8">
                         <div className="relative">
                             <img
-                                src={previewImage || (currentUser?.data?.data?.user?.profile_image)}
+                                src={previewImage || (currentUser?.data?.data?.admin?.profile_image)}
                                 alt="Profile"
                                 className="w-24 h-24 rounded-full object-cover border-2 border-gray-200"
                             />
@@ -219,10 +219,10 @@ export default function UserSetting() {
                             )}
                         </div>
                         <div className="ml-6">
-                            <h2 className="text-xl font-semibold">{currentUser?.data?.data?.user?.name}</h2>
-                            <p className="text-gray-600">{currentUser?.data?.data?.user?.email}</p>
+                            <h2 className="text-xl font-semibold">{currentUser?.data?.data?.admin?.name}</h2>
+                            <p className="text-gray-600">{currentUser?.data?.data?.admin?.email}</p>
                             <p className="text-sm text-gray-500 mt-1">
-                                Member since: {new Date(currentUser?.data?.data?.user?.created_at).toLocaleDateString()}
+                                Member since: {new Date(currentUser?.data?.data?.admin?.created_at).toLocaleDateString()}
                             </p>
                         </div>
                     </div>
@@ -239,7 +239,7 @@ export default function UserSetting() {
                                         disabled={sendVerificationMutation.isPending}
                                     />
                                 ) : (
-                                    <p className="px-3 py-2 bg-gray-50 rounded-md">{currentUser?.data?.data?.user?.name}</p>
+                                    <p className="px-3 py-2 bg-gray-50 rounded-md">{currentUser?.data?.data?.admin?.name}</p>
                                 )}
                                 {errors.name && <p className="text-red-500 text-sm mt-1">{errors.name.message}</p>}
                             </div>
@@ -259,7 +259,7 @@ export default function UserSetting() {
                                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                                     />
                                 ) : (
-                                    <p className="px-3 py-2 bg-gray-50 rounded-md">{currentUser?.data?.data?.user?.email}</p>
+                                    <p className="px-3 py-2 bg-gray-50 rounded-md">{currentUser?.data?.data?.admin?.email}</p>
                                 )}
                                 {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email.message}</p>}
                             </div>
@@ -277,7 +277,7 @@ export default function UserSetting() {
                                     />
                                 ) : (
                                     <p className="px-3 py-2 bg-gray-50 rounded-md whitespace-pre-line">
-                                        {currentUser?.data?.data?.user?.bio || 'No bio yet'}
+                                        {currentUser?.data?.data?.admin?.bio || 'No bio yet'}
                                     </p>
                                 )}
                             </div>

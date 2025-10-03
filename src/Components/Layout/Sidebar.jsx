@@ -100,7 +100,19 @@ export default function Sidebar() {
             title: 'Jobs Applications',
             path: '/jobs-applications',
             icon: <IoLinkOutline />,
-            permission: ""
+            permission: "view_job_applications"
+        },
+        {
+            title: 'Testmonials',
+            path: '/testmonials',
+            icon: <IoLinkOutline />,
+            permission: "view_feedbacks"
+        },
+        {
+            title: 'About Us',
+            path: '/about-us',
+            icon: <IoLinkOutline />,
+            permission: "view_feedbacks"
         },
 
     ]

@@ -859,10 +859,10 @@ export default function JobsApplicationsDataTable({ applications, loading, refet
                                     </button>
                                     <button
                                         type="submit"
-                                        disabled={updateStatusMutation.isLoading}
+                                        disabled={updateStatusMutation.isPending}
                                         className="px-4 py-2 bg-primary text-white rounded-md hover:bg-darkBlue transition-all flex items-center gap-2 disabled:opacity-50"
                                     >
-                                        {updateStatusMutation.isLoading ? (
+                                        {updateStatusMutation.isPending ? (
                                             <>
                                                 <FaSpinner className="animate-spin" />
                                                 Updating...
@@ -919,10 +919,10 @@ export default function JobsApplicationsDataTable({ applications, loading, refet
                                     </button>
                                     <button
                                         type="submit"
-                                        disabled={updateNotesMutation.isLoading}
+                                        disabled={updateNotesMutation.isPending}
                                         className="px-4 py-2 bg-primary text-white rounded-md hover:bg-darkBlue transition-all flex items-center gap-2 disabled:opacity-50"
                                     >
-                                        {updateNotesMutation.isLoading ? (
+                                        {updateNotesMutation.isPending ? (
                                             <>
                                                 <FaSpinner className="animate-spin" />
                                                 Saving...
