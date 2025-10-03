@@ -256,7 +256,7 @@ export default function ProjectsDataTable({ projects, loading, refetch }) {
         setActiveDraftId(draft.id);
         upsertDraft(draft);
         toast.success('Draft saved locally');
-    }; setShowAddModal
+    };
 
     const resumeDraft = (draft) => {
         setFormData({
@@ -608,8 +608,6 @@ export default function ProjectsDataTable({ projects, loading, refetch }) {
                 formDataToSend.append('tags[]', tag);
             });
 
-
-
             formDataToSend.append('cover_photo', formData.cover_photo || '');
             formDataToSend.append('image1', formData.image1 || '');
             formDataToSend.append('image2', formData.image2 || '');
@@ -668,10 +666,36 @@ export default function ProjectsDataTable({ projects, loading, refetch }) {
                 formDataToSend.append('tags[]', tag);
             });
 
-            formDataToSend.append('cover_photo', editFormData.cover_photo || '');
-            formDataToSend.append('image1', editFormData.image1 || '');
-            formDataToSend.append('image2', editFormData.image2 || '');
-            formDataToSend.append('image3', editFormData.image3 || '');
+            // Only append images if they have been changed (new file selected)
+            // For cover_photo
+            if (editFormData.cover_photo instanceof File) {
+                formDataToSend.append('cover_photo', editFormData.cover_photo);
+            } else if (editFormData.existing_cover_photo === null) {
+                // If existing_cover_photo is null, it means the image was removed
+                formDataToSend.append('cover_photo', '');
+            }
+            // Otherwise, don't send cover_photo field to preserve existing image
+
+            // For image1
+            if (editFormData.image1 instanceof File) {
+                formDataToSend.append('image1', editFormData.image1);
+            } else if (editFormData.existing_image1 === null) {
+                formDataToSend.append('image1', '');
+            }
+
+            // For image2
+            if (editFormData.image2 instanceof File) {
+                formDataToSend.append('image2', editFormData.image2);
+            } else if (editFormData.existing_image2 === null) {
+                formDataToSend.append('image2', '');
+            }
+
+            // For image3
+            if (editFormData.image3 instanceof File) {
+                formDataToSend.append('image3', editFormData.image3);
+            } else if (editFormData.existing_image3 === null) {
+                formDataToSend.append('image3', '');
+            }
 
             await axios.post(
                 `https://nexus-consults.com/api/admin/projects/${editFormData.id}`,
@@ -796,7 +820,6 @@ export default function ProjectsDataTable({ projects, loading, refetch }) {
             </div>
         );
     };
-
 
     // Handle individual project selection
     const handleSelectProject = (projectId, isSelected) => {
@@ -1052,7 +1075,7 @@ export default function ProjectsDataTable({ projects, loading, refetch }) {
                                             <input
                                                 type="checkbox"
                                                 checked={selectedProjects.includes(project.id)}
-                                                onChange={(e) => handleSelectproject(project.id, e.target.checked)}
+                                                onChange={(e) => handleSelectProject(project.id, e.target.checked)}
                                                 className="h-4 w-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
                                             />
                                             <span className="ml-2 text-sm font-medium text-gray-900">
