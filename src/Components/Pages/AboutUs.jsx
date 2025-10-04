@@ -16,7 +16,9 @@ import {
     FaCalendarAlt,
     FaProjectDiagram,
     FaUsers,
-    FaUserCog
+    FaUserCog,
+    FaGlobe,
+    FaLink
 } from 'react-icons/fa';
 
 export default function AboutUs() {
@@ -41,6 +43,7 @@ export default function AboutUs() {
     const [formData, setFormData] = useState({
         our_mission: '',
         our_vision: '',
+        portfolio: '',
         years: '',
         projects: '',
         clients: '',
@@ -71,6 +74,7 @@ export default function AboutUs() {
             setFormData({
                 our_mission: data.our_mission || '',
                 our_vision: data.our_vision || '',
+                portfolio: data.portfolio || '',
                 years: data.years || '',
                 projects: data.projects || '',
                 clients: data.clients || '',
@@ -137,6 +141,7 @@ export default function AboutUs() {
             const data = new FormData();
             data.append('our_mission', formData.our_mission);
             data.append('our_vision', formData.our_vision);
+            data.append('portfolio', formData.portfolio);
             data.append('years', formData.years);
             data.append('projects', formData.projects);
             data.append('clients', formData.clients);
@@ -178,8 +183,14 @@ export default function AboutUs() {
         e.preventDefault();
 
         // Validate required fields
-        if (!formData.our_mission || !formData.our_vision) {
+        if (!formData.our_mission || !formData.our_vision || !formData.portfolio) {
             toast.error('Please fill in all required fields');
+            return;
+        }
+
+        // Validate portfolio URL format
+        if (formData.portfolio && !isValidUrl(formData.portfolio)) {
+            toast.error('Please enter a valid URL for the portfolio');
             return;
         }
 
@@ -192,6 +203,16 @@ export default function AboutUs() {
         updateAboutUsMutation.mutate(formData);
     };
 
+    // URL validation function
+    const isValidUrl = (string) => {
+        try {
+            new URL(string);
+            return true;
+        } catch (_) {
+            return false;
+        }
+    };
+
     const handleCancel = () => {
         setIsEditing(false);
         // Reset form data to original values
@@ -200,6 +221,7 @@ export default function AboutUs() {
             setFormData({
                 our_mission: data.our_mission || '',
                 our_vision: data.our_vision || '',
+                portfolio: data.portfolio || '',
                 years: data.years || '',
                 projects: data.projects || '',
                 clients: data.clients || '',
@@ -329,7 +351,7 @@ export default function AboutUs() {
                                                         Choose Image
                                                     </button>
                                                     <p className="text-xs text-gray-500 mt-2 text-center">
-                                                        PNG, JPG, JPEG up to 5MB
+                                                        PNG, JPG, JPEG up to 6MB
                                                     </p>
                                                 </div>
                                             )}
@@ -438,11 +460,11 @@ export default function AboutUs() {
                                     </div>
                                 </div>
 
-                                {/* Right Column - Mission and Vision */}
+                                {/* Right Column - Mission, Vision and Portfolio */}
                                 <div className="space-y-6">
                                     {/* Our Mission */}
                                     <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-3 flex items-center gap-2">
+                                        <label className="text-sm font-medium text-gray-700 mb-3 flex items-center gap-2">
                                             <FaRocket className="text-primary" />
                                             Our Mission *
                                         </label>
@@ -450,7 +472,7 @@ export default function AboutUs() {
                                             <textarea
                                                 value={formData.our_mission}
                                                 onChange={(e) => setFormData(prev => ({ ...prev, our_mission: e.target.value }))}
-                                                rows={6}
+                                                rows={4}
                                                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-primary resize-vertical"
                                                 placeholder="Describe your company's mission..."
                                                 required
@@ -466,7 +488,7 @@ export default function AboutUs() {
 
                                     {/* Our Vision */}
                                     <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-3 flex items-center gap-2">
+                                        <label className="text-sm font-medium text-gray-700 mb-3 flex items-center gap-2">
                                             <FaEye className="text-primary" />
                                             Our Vision *
                                         </label>
@@ -474,7 +496,7 @@ export default function AboutUs() {
                                             <textarea
                                                 value={formData.our_vision}
                                                 onChange={(e) => setFormData(prev => ({ ...prev, our_vision: e.target.value }))}
-                                                rows={6}
+                                                rows={4}
                                                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-primary resize-vertical"
                                                 placeholder="Describe your company's vision..."
                                                 required
@@ -484,6 +506,47 @@ export default function AboutUs() {
                                                 <p className="text-gray-700 whitespace-pre-wrap">
                                                     {aboutusData?.data?.data?.our_vision || 'No vision statement provided.'}
                                                 </p>
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    {/* Portfolio */}
+                                    <div>
+                                        <label className="text-sm font-medium text-gray-700 mb-3 flex items-center gap-2">
+                                            <FaLink className="text-primary" />
+                                            Portfolio URL *
+                                        </label>
+                                        {isEditing ? (
+                                            <div>
+                                                <input
+                                                    type="url"
+                                                    value={formData.portfolio}
+                                                    onChange={(e) => setFormData(prev => ({ ...prev, portfolio: e.target.value }))}
+                                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-primary"
+                                                    placeholder="https://drive.google.com/your-portfolio-link"
+                                                    required
+                                                />
+                                                <p className="text-xs text-gray-500 mt-2">
+                                                    Enter the Google Drive URL for your portfolio
+                                                </p>
+                                            </div>
+                                        ) : (
+                                            <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
+                                                {aboutusData?.data?.data?.portfolio ? (
+                                                    <div className="flex items-center gap-2">
+                                                        <FaLink className="text-primary" size={14} />
+                                                        <a
+                                                            href={aboutusData.data.data.portfolio}
+                                                            target="_blank"
+                                                            rel="noopener noreferrer"
+                                                            className="text-primary hover:text-darkBlue break-all"
+                                                        >
+                                                            {aboutusData.data.data.portfolio}
+                                                        </a>
+                                                    </div>
+                                                ) : (
+                                                    <p className="text-gray-700">No portfolio URL provided.</p>
+                                                )}
                                             </div>
                                         )}
                                     </div>
