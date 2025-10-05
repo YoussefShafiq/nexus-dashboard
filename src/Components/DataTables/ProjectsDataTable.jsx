@@ -104,7 +104,7 @@ export default function ProjectsDataTable({ projects, loading, refetch }) {
     const { data: currentUser, isLoading: isCurrentuserLoading } = useQuery({
         queryKey: ['currentUser'],
         queryFn: () => {
-            return axios.get('https://nexus-consults.com/api/admin/auth/profile',
+            return axios.get('https://nexus-consults.com/api/public/api/admin/auth/profile',
                 {
                     headers: {
                         Authorization: `Bearer ${localStorage.getItem('userToken')}`
@@ -119,7 +119,7 @@ export default function ProjectsDataTable({ projects, loading, refetch }) {
         queryFn: () => {
             if (!editingProjectId) return Promise.resolve(null);
             return axios.get(
-                `https://nexus-consults.com/api/admin/projects/${editingProjectId}`,
+                `https://nexus-consults.com/api/public/api/admin/projects/${editingProjectId}`,
                 {
                     headers: {
                         Authorization: `Bearer ${localStorage.getItem('userToken')}`
@@ -348,7 +348,7 @@ export default function ProjectsDataTable({ projects, loading, refetch }) {
         setTogglingProjectId(projectId);
         try {
             await axios.patch(
-                `https://nexus-consults.com/api/admin/projects/${projectId}/toggle-active`,
+                `https://nexus-consults.com/api/public/api/admin/projects/${projectId}/toggle-active`,
                 {},
                 {
                     headers: {
@@ -386,7 +386,7 @@ export default function ProjectsDataTable({ projects, loading, refetch }) {
 
         try {
             await axios.delete(
-                `https://nexus-consults.com/api/admin/projects/${projectToDelete}`,
+                `https://nexus-consults.com/api/public/api/admin/projects/${projectToDelete}`,
                 {
                     headers: {
                         Authorization: `Bearer ${localStorage.getItem('userToken')}`
@@ -616,7 +616,7 @@ export default function ProjectsDataTable({ projects, loading, refetch }) {
             formDataToSend.append('description', formData.description);
 
             await axios.post(
-                'https://nexus-consults.com/api/admin/projects',
+                'https://nexus-consults.com/api/public/api/admin/projects',
                 formDataToSend,
                 {
                     headers: {
@@ -698,7 +698,7 @@ export default function ProjectsDataTable({ projects, loading, refetch }) {
             }
 
             await axios.post(
-                `https://nexus-consults.com/api/admin/projects/${editFormData.id}`,
+                `https://nexus-consults.com/api/public/api/admin/projects/${editFormData.id}`,
                 formDataToSend,
                 {
                     headers: {
@@ -856,7 +856,7 @@ export default function ProjectsDataTable({ projects, loading, refetch }) {
 
         try {
             setIsBulkActionLoading(true);
-            await axios.post('https://nexus-consults.com/api/admin/projects/bulk/delete',
+            await axios.post('https://nexus-consults.com/api/public/api/admin/projects/bulk/delete',
                 { ids: selectedProjects },
                 {
                     headers: {
@@ -882,7 +882,7 @@ export default function ProjectsDataTable({ projects, loading, refetch }) {
 
         try {
             setIsBulkActionLoading(true);
-            await axios.post('https://nexus-consults.com/api/admin/projects/bulk/update-status',
+            await axios.post('https://nexus-consults.com/api/public/api/admin/projects/bulk/update-status',
                 {
                     ids: selectedProjects,
                     status: status

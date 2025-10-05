@@ -93,7 +93,7 @@ export default function JobsDataTable({ jobs, loading, refetch }) {
     const { data: currentUser, isLoading: isCurrentuserLoading } = useQuery({
         queryKey: ['currentUser'],
         queryFn: () => {
-            return axios.get('https://nexus-consults.com/api/admin/auth/profile',
+            return axios.get('https://nexus-consults.com/api/public/api/admin/auth/profile',
                 {
                     headers: {
                         Authorization: `Bearer ${localStorage.getItem('userToken')}`
@@ -108,7 +108,7 @@ export default function JobsDataTable({ jobs, loading, refetch }) {
         queryFn: () => {
             if (!editingJobId) return Promise.resolve(null);
             return axios.get(
-                `https://nexus-consults.com/api/admin/jobs/${editingJobId}`,
+                `https://nexus-consults.com/api/public/api/admin/jobs/${editingJobId}`,
                 {
                     headers: {
                         Authorization: `Bearer ${localStorage.getItem('userToken')}`
@@ -312,7 +312,7 @@ export default function JobsDataTable({ jobs, loading, refetch }) {
         setTogglingJobId(jobId);
         try {
             await axios.patch(
-                `https://nexus-consults.com/api/admin/jobs/${jobId}/toggle-active`,
+                `https://nexus-consults.com/api/public/api/admin/jobs/${jobId}/toggle-active`,
                 {},
                 {
                     headers: {
@@ -350,7 +350,7 @@ export default function JobsDataTable({ jobs, loading, refetch }) {
 
         try {
             await axios.delete(
-                `https://nexus-consults.com/api/admin/jobs/${jobToDelete}`,
+                `https://nexus-consults.com/api/public/api/admin/jobs/${jobToDelete}`,
                 {
                     headers: {
                         Authorization: `Bearer ${localStorage.getItem('userToken')}`
@@ -509,7 +509,7 @@ export default function JobsDataTable({ jobs, loading, refetch }) {
         setUpdatingJob(true);
         try {
             await axios.post(
-                'https://nexus-consults.com/api/admin/jobs',
+                'https://nexus-consults.com/api/public/api/admin/jobs',
                 formData,
                 {
                     headers: {
@@ -545,7 +545,7 @@ export default function JobsDataTable({ jobs, loading, refetch }) {
         setUpdatingJob(true);
         try {
             await axios.post(
-                `https://nexus-consults.com/api/admin/jobs/${editFormData.id}`,
+                `https://nexus-consults.com/api/public/api/admin/jobs/${editFormData.id}`,
                 editFormData,
                 {
                     headers: {
@@ -724,7 +724,7 @@ export default function JobsDataTable({ jobs, loading, refetch }) {
 
         try {
             setIsBulkActionLoading(true);
-            await axios.post('https://nexus-consults.com/api/admin/jobs/bulk/delete',
+            await axios.post('https://nexus-consults.com/api/public/api/admin/jobs/bulk/delete',
                 { ids: selectedJobs },
                 {
                     headers: {
@@ -750,7 +750,7 @@ export default function JobsDataTable({ jobs, loading, refetch }) {
 
         try {
             setIsBulkActionLoading(true);
-            await axios.post('https://nexus-consults.com/api/admin/jobs/bulk/update-status',
+            await axios.post('https://nexus-consults.com/api/public/api/admin/jobs/bulk/update-status',
                 {
                     ids: selectedJobs,
                     status: status

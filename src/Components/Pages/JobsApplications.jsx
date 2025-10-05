@@ -10,7 +10,7 @@ export default function JobsApplications() {
 
     function getAllJobs() {
         return axios.get(
-            `https://nexus-consults.com/api/admin/job-applications`,
+            `https://nexus-consults.com/api/public/api/admin/job-applications`,
             {
                 headers: {
                     Authorization: `Bearer ${localStorage.getItem('userToken')}`

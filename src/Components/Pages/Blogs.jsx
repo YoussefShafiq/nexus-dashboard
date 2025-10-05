@@ -11,7 +11,7 @@ export default function Blogs() {
 
     function getAllBlogs() {
         return axios.get(
-            `https://nexus-consults.com/api/admin/blogs`,
+            `https://nexus-consults.com/api/public/api/admin/blogs`,
             {
                 headers: {
                     Authorization: `Bearer ${localStorage.getItem('userToken')}`

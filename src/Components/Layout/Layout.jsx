@@ -11,7 +11,7 @@ export function UserBar() {
     const { data: currentUser, isLoading: isCurrentUserLoading } = useQuery({
         queryKey: ['currentUser'],
         queryFn: () => {
-            return axios.get('https://nexus-consults.com/api/admin/auth/profile', {
+            return axios.get('https://nexus-consults.com/api/public/api/admin/auth/profile', {
                 headers: {
                     Authorization: `Bearer ${localStorage.getItem('userToken')}`
                 }

@@ -11,7 +11,7 @@ export default function Projects() {
 
     function getAllProjects() {
         return axios.get(
-            `https://nexus-consults.com/api/admin/projects`,
+            `https://nexus-consults.com/api/public/api/admin/projects`,
             {
                 headers: {
                     Authorization: `Bearer ${localStorage.getItem('userToken')}`

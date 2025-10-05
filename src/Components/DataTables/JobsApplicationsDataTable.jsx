@@ -69,7 +69,7 @@ export default function JobsApplicationsDataTable({ applications, loading, refet
     const { data: statusOptions } = useQuery({
         queryKey: ['applicationStatusOptions'],
         queryFn: () =>
-            axios.get('https://nexus-consults.com/api/admin/job-applications/status-options', {
+            axios.get('https://nexus-consults.com/api/public/api/admin/job-applications/status-options', {
                 headers: {
                     Authorization: `Bearer ${localStorage.getItem('userToken')}`
                 }
@@ -81,7 +81,7 @@ export default function JobsApplicationsDataTable({ applications, loading, refet
     const { data: currentUser } = useQuery({
         queryKey: ['currentUser'],
         queryFn: () => {
-            return axios.get('https://nexus-consults.com/api/admin/auth/profile',
+            return axios.get('https://nexus-consults.com/api/public/api/admin/auth/profile',
                 {
                     headers: {
                         Authorization: `Bearer ${localStorage.getItem('userToken')}`
@@ -96,7 +96,7 @@ export default function JobsApplicationsDataTable({ applications, loading, refet
         queryFn: () => {
             if (!selectedApplication) return Promise.resolve(null);
             return axios.get(
-                `https://nexus-consults.com/api/admin/job-applications/${selectedApplication}`,
+                `https://nexus-consults.com/api/public/api/admin/job-applications/${selectedApplication}`,
                 {
                     headers: {
                         Authorization: `Bearer ${localStorage.getItem('userToken')}`
@@ -131,7 +131,7 @@ export default function JobsApplicationsDataTable({ applications, loading, refet
 
         try {
             await axios.delete(
-                `https://nexus-consults.com/api/admin/job-applications/${applicationToDelete}`,
+                `https://nexus-consults.com/api/public/api/admin/job-applications/${applicationToDelete}`,
                 {
                     headers: {
                         Authorization: `Bearer ${localStorage.getItem('userToken')}`
@@ -176,7 +176,7 @@ export default function JobsApplicationsDataTable({ applications, loading, refet
     const updateStatusMutation = useMutation({
         mutationFn: ({ applicationId, status }) =>
             axios.patch(
-                `https://nexus-consults.com/api/admin/job-applications/${applicationId}/status`,
+                `https://nexus-consults.com/api/public/api/admin/job-applications/${applicationId}/status`,
                 { status },
                 {
                     headers: {
@@ -205,7 +205,7 @@ export default function JobsApplicationsDataTable({ applications, loading, refet
     const updateNotesMutation = useMutation({
         mutationFn: ({ applicationId, notes }) =>
             axios.patch(
-                `https://nexus-consults.com/api/admin/job-applications/${applicationId}/notes`,
+                `https://nexus-consults.com/api/public/api/admin/job-applications/${applicationId}/notes`,
                 { admin_notes: notes },
                 {
                     headers: {
@@ -233,7 +233,7 @@ export default function JobsApplicationsDataTable({ applications, loading, refet
     const handleDownloadCV = async (applicationId) => {
         try {
             const response = await axios.get(
-                `https://nexus-consults.com/api/admin/job-applications/${applicationId}/download/cv`,
+                `https://nexus-consults.com/api/public/api/admin/job-applications/${applicationId}/download/cv`,
                 {
                     headers: {
                         Authorization: `Bearer ${localStorage.getItem('userToken')}`
@@ -402,7 +402,7 @@ export default function JobsApplicationsDataTable({ applications, loading, refet
 
         try {
             setIsBulkActionLoading(true);
-            await axios.post('https://nexus-consults.com/api/admin/job-applications/bulk/delete',
+            await axios.post('https://nexus-consults.com/api/public/api/admin/job-applications/bulk/delete',
                 { ids: selectedApplications },
                 {
                     headers: {

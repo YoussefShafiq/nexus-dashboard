@@ -59,7 +59,7 @@ export default function AdminsDataTable({ admins, allPermissions, loading, refet
     const { data: currentUser, isLoading: isCurrentuserLoading, error, isError } = useQuery({
         queryKey: ['currentUser'],
         queryFn: () => {
-            return axios.get('https://nexus-consults.com/api/admin/auth/profile',
+            return axios.get('https://nexus-consults.com/api/public/api/admin/auth/profile',
                 {
                     headers: {
                         Authorization: `Bearer ${localStorage.getItem('userToken')}`
@@ -73,7 +73,7 @@ export default function AdminsDataTable({ admins, allPermissions, loading, refet
         try {
             const newStatus = currentStatus === 'active' ? 'inactive' : 'active';
             await axios.patch(
-                `https://nexus-consults.com/api/admin/${adminId}/toggle-status`,
+                `https://nexus-consults.com/api/public/api/admin/${adminId}/toggle-status`,
                 { status: newStatus },
                 {
                     headers: {
@@ -107,7 +107,7 @@ export default function AdminsDataTable({ admins, allPermissions, loading, refet
 
         try {
             await axios.delete(
-                `https://nexus-consults.com/api/admin/users/${adminToDelete}`,
+                `https://nexus-consults.com/api/public/api/admin/users/${adminToDelete}`,
                 {
                     headers: {
                         Authorization: `Bearer ${localStorage.getItem('userToken')}`
@@ -199,7 +199,7 @@ export default function AdminsDataTable({ admins, allPermissions, loading, refet
         setUpdatingAdmin(true);
         try {
             await axios.post(
-                'https://nexus-consults.com/api/admin/users',
+                'https://nexus-consults.com/api/public/api/admin/users',
                 {
                     name: formData.name,
                     email: formData.email,
@@ -251,7 +251,7 @@ export default function AdminsDataTable({ admins, allPermissions, loading, refet
             }
 
             await axios.put(
-                `https://nexus-consults.com/api/admin/users/${selectedAdmin.id}`,
+                `https://nexus-consults.com/api/public/api/admin/users/${selectedAdmin.id}`,
                 payload,
                 {
                     headers: {
@@ -284,7 +284,7 @@ export default function AdminsDataTable({ admins, allPermissions, loading, refet
         setUpdatingAdmin(true);
         try {
             await axios.post(
-                `https://nexus-consults.com/api/admin/permissions/assign/${selectedAdmin.id}`,
+                `https://nexus-consults.com/api/public/api/admin/permissions/assign/${selectedAdmin.id}`,
                 {
                     permissions: formData.permissions
                 },

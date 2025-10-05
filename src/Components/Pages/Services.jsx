@@ -11,7 +11,7 @@ export default function Services() {
 
     function getAllServices() {
         return axios.get(
-            `https://nexus-consults.com/api/admin/services`,
+            `https://nexus-consults.com/api/public/api/admin/services`,
             {
                 headers: {
                     Authorization: `Bearer ${localStorage.getItem('userToken')}`

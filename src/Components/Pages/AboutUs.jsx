@@ -31,7 +31,7 @@ export default function AboutUs() {
     const { data: currentUser, isLoading: isCurrentUserLoading } = useQuery({
         queryKey: ['currentUser'],
         queryFn: () => {
-            return axios.get('https://nexus-consults.com/api/admin/auth/profile', {
+            return axios.get('https://nexus-consults.com/api/public/api/admin/auth/profile', {
                 headers: {
                     Authorization: `Bearer ${localStorage.getItem('userToken')}`
                 }
@@ -58,7 +58,7 @@ export default function AboutUs() {
     const { data: aboutusData, isLoading, isError, error } = useQuery({
         queryKey: ['aboutUs'],
         queryFn: () => {
-            return axios.get('https://nexus-consults.com/api/admin/settings', {
+            return axios.get('https://nexus-consults.com/api/public/api/admin/settings', {
                 headers: {
                     Authorization: `Bearer ${localStorage.getItem('userToken')}`
                 }
@@ -152,7 +152,7 @@ export default function AboutUs() {
             data.append('_method', 'PUT');
 
             return axios.post(
-                'https://nexus-consults.com/api/admin/settings',
+                'https://nexus-consults.com/api/public/api/admin/settings',
                 data,
                 {
                     headers: {

@@ -110,7 +110,7 @@ export default function BlogsDataTable({ blogs, loading, refetch }) {
         queryKey: ['blogFaqs', currentBlogId],
         queryFn: () => {
             if (!currentBlogId) return Promise.resolve([]);
-            return axios.get(`https://nexus-consults.com/api/admin/blogs/${currentBlogId}/manage/faq`, {
+            return axios.get(`https://nexus-consults.com/api/public/api/admin/blogs/${currentBlogId}/manage/faq`, {
                 headers: {
                     Authorization: `Bearer ${localStorage.getItem('userToken')}`
                 }
@@ -123,7 +123,7 @@ export default function BlogsDataTable({ blogs, loading, refetch }) {
     const addFaqMutation = useMutation({
         mutationFn: (newFaq) => {
             return axios.post(
-                `https://nexus-consults.com/api/admin/blogs/${currentBlogId}/manage/faq`,
+                `https://nexus-consults.com/api/public/api/admin/blogs/${currentBlogId}/manage/faq`,
                 newFaq,
                 {
                     headers: {
@@ -153,7 +153,7 @@ export default function BlogsDataTable({ blogs, loading, refetch }) {
     const updateFaqMutation = useMutation({
         mutationFn: (updatedFaq) => {
             return axios.put(
-                `https://nexus-consults.com/api/admin/blogs/${currentBlogId}/manage/faq/${editingFaqId}`,
+                `https://nexus-consults.com/api/public/api/admin/blogs/${currentBlogId}/manage/faq/${editingFaqId}`,
                 updatedFaq,
                 {
                     headers: {
@@ -184,7 +184,7 @@ export default function BlogsDataTable({ blogs, loading, refetch }) {
     const deleteFaqMutation = useMutation({
         mutationFn: (faqId) => {
             return axios.delete(
-                `https://nexus-consults.com/api/admin/blogs/${currentBlogId}/manage/faq/${faqId}`,
+                `https://nexus-consults.com/api/public/api/admin/blogs/${currentBlogId}/manage/faq/${faqId}`,
                 {
                     headers: {
                         Authorization: `Bearer ${localStorage.getItem('userToken')}`
@@ -411,7 +411,7 @@ export default function BlogsDataTable({ blogs, loading, refetch }) {
     const { data: currentUser, isLoading: isCurrentuserLoading } = useQuery({
         queryKey: ['currentUser'],
         queryFn: () => {
-            return axios.get('https://nexus-consults.com/api/admin/auth/profile',
+            return axios.get('https://nexus-consults.com/api/public/api/admin/auth/profile',
                 {
                     headers: {
                         Authorization: `Bearer ${localStorage.getItem('userToken')} `
@@ -424,7 +424,7 @@ export default function BlogsDataTable({ blogs, loading, refetch }) {
         setTogglingBlogId(blogId);
         try {
             await axios.patch(
-                `https://nexus-consults.com/api/admin/blogs/${blogId}/toggle-active`,
+                `https://nexus-consults.com/api/public/api/admin/blogs/${blogId}/toggle-active`,
                 {},
                 {
                     headers: {
@@ -462,7 +462,7 @@ export default function BlogsDataTable({ blogs, loading, refetch }) {
 
         try {
             await axios.delete(
-                `https://nexus-consults.com/api/admin/blogs/${blogToDelete}`,
+                `https://nexus-consults.com/api/public/api/admin/blogs/${blogToDelete}`,
                 {
                     headers: {
                         Authorization: `Bearer ${localStorage.getItem('userToken')}`
@@ -648,7 +648,7 @@ export default function BlogsDataTable({ blogs, loading, refetch }) {
             }
 
             await axios.post(
-                'https://nexus-consults.com/api/admin/blogs',
+                'https://nexus-consults.com/api/public/api/admin/blogs',
                 formDataToSend,
                 {
                     headers: {
@@ -706,7 +706,7 @@ export default function BlogsDataTable({ blogs, loading, refetch }) {
             }
 
             await axios.post(
-                `https://nexus-consults.com/api/admin/blogs/${editFormData.id}`,
+                `https://nexus-consults.com/api/public/api/admin/blogs/${editFormData.id}`,
                 formDataToSend,
                 {
                     headers: {
@@ -757,7 +757,7 @@ export default function BlogsDataTable({ blogs, loading, refetch }) {
             }
 
             await axios.post(
-                `https://nexus-consults.com/api/admin/blogs/${editFormData.id}`,
+                `https://nexus-consults.com/api/public/api/admin/blogs/${editFormData.id}`,
                 formDataToSend,
                 {
                     headers: {
@@ -1091,7 +1091,7 @@ export default function BlogsDataTable({ blogs, loading, refetch }) {
 
         try {
             setIsBulkActionLoading(true);
-            await axios.post('https://nexus-consults.com/api/admin/blogs/bulk/delete',
+            await axios.post('https://nexus-consults.com/api/public/api/admin/blogs/bulk/delete',
                 { ids: selectedBlogs },
                 {
                     headers: {
@@ -1117,7 +1117,7 @@ export default function BlogsDataTable({ blogs, loading, refetch }) {
 
         try {
             setIsBulkActionLoading(true);
-            await axios.post('https://nexus-consults.com/api/admin/blogs/bulk/update-status',
+            await axios.post('https://nexus-consults.com/api/public/api/admin/blogs/bulk/update-status',
                 {
                     ids: selectedBlogs,
                     status: status

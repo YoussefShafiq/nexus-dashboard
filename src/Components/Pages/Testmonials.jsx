@@ -12,7 +12,7 @@ export default function Testmonials() {
     const { data: testmonialsData, isLoading, isError, error, refetch } = useQuery({
         queryKey: ['testmonials'],
         queryFn: () => {
-            return axios.get('https://nexus-consults.com/api/admin/feedbacks',
+            return axios.get('https://nexus-consults.com/api/public/api/admin/feedbacks',
                 {
                     headers: {
                         Authorization: `Bearer ${localStorage.getItem('userToken')}`

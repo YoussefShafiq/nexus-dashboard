@@ -10,7 +10,7 @@ export default function Admins() {
 
     function getAdminsData() {
         return axios.get(
-            `https://nexus-consults.com/api/admin/users`,
+            `https://nexus-consults.com/api/public/api/admin/users`,
             {
                 headers: {
                     Authorization: `Bearer ${localStorage.getItem('userToken')}`
@@ -33,7 +33,7 @@ export default function Admins() {
 
     function getpermissionsData() {
         return axios.get(
-            `https://nexus-consults.com/api/admin/permissions`,
+            `https://nexus-consults.com/api/public/api/admin/permissions`,
             {
                 headers: {
                     Authorization: `Bearer ${localStorage.getItem('userToken')}`

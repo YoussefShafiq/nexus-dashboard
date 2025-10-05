@@ -13,7 +13,7 @@ export default function Login() {
     async function login(values) {
         setloading(true)
         try {
-            let { data } = await axios.post('https://nexus-consults.com/api/admin/auth/login', values)
+            let { data } = await axios.post('https://nexus-consults.com/api/public/api/admin/auth/login', values)
             setloading(false)
             toast.success('logged in successfully', {
                 duration: 2000,

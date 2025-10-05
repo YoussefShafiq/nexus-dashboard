@@ -75,7 +75,7 @@ export default function TestmonialsDataTable({ testmonialsData, loading, refetch
     const { data: currentUser } = useQuery({
         queryKey: ['currentUser'],
         queryFn: () => {
-            return axios.get('https://nexus-consults.com/api/admin/auth/profile',
+            return axios.get('https://nexus-consults.com/api/public/api/admin/auth/profile',
                 {
                     headers: {
                         Authorization: `Bearer ${localStorage.getItem('userToken')}`
@@ -90,7 +90,7 @@ export default function TestmonialsDataTable({ testmonialsData, loading, refetch
         queryFn: () => {
             if (!selectedTestmonial) return Promise.resolve(null);
             return axios.get(
-                `https://nexus-consults.com/api/admin/feedbacks/${selectedTestmonial}`,
+                `https://nexus-consults.com/api/public/api/admin/feedbacks/${selectedTestmonial}`,
                 {
                     headers: {
                         Authorization: `Bearer ${localStorage.getItem('userToken')}`
@@ -122,7 +122,7 @@ export default function TestmonialsDataTable({ testmonialsData, loading, refetch
 
         try {
             await axios.delete(
-                `https://nexus-consults.com/api/admin/feedbacks/${testmonialToDelete}`,
+                `https://nexus-consults.com/api/public/api/admin/feedbacks/${testmonialToDelete}`,
                 {
                     headers: {
                         Authorization: `Bearer ${localStorage.getItem('userToken')}`
@@ -236,7 +236,7 @@ export default function TestmonialsDataTable({ testmonialsData, loading, refetch
             }
 
             return axios.post(
-                'https://nexus-consults.com/api/admin/feedbacks',
+                'https://nexus-consults.com/api/public/api/admin/feedbacks',
                 data,
                 {
                     headers: {
@@ -275,7 +275,7 @@ export default function TestmonialsDataTable({ testmonialsData, loading, refetch
             data.append('_method', 'PUT');
 
             return axios.post(
-                `https://nexus-consults.com/api/admin/feedbacks/${testmonialId}`,
+                `https://nexus-consults.com/api/public/api/admin/feedbacks/${testmonialId}`,
                 data,
                 {
                     headers: {
@@ -306,7 +306,7 @@ export default function TestmonialsDataTable({ testmonialsData, loading, refetch
     const toggleStatusMutation = useMutation({
         mutationFn: (testmonialId) =>
             axios.patch(
-                `https://nexus-consults.com/api/admin/feedbacks/${testmonialId}/toggle-active`,
+                `https://nexus-consults.com/api/public/api/admin/feedbacks/${testmonialId}/toggle-active`,
                 {},
                 {
                     headers: {
@@ -467,7 +467,7 @@ export default function TestmonialsDataTable({ testmonialsData, loading, refetch
 
         try {
             setIsBulkActionLoading(true);
-            await axios.post('https://nexus-consults.com/api/admin/feedbacks/bulk/delete',
+            await axios.post('https://nexus-consults.com/api/public/api/admin/feedbacks/bulk/delete',
                 { ids: selectedTestmonials },
                 {
                     headers: {

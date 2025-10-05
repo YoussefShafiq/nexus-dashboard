@@ -28,7 +28,7 @@ export default function Sidebar() {
     async function handleLogout() {
         setloggingOut(true)
         try {
-            let resopnse = await axios.post('https://nexus-consults.com/api/admin/auth/logout', {}, { headers: { Authorization: `Bearer ${localStorage.getItem('userToken')}` } })
+            let resopnse = await axios.post('https://nexus-consults.com/api/public/api/admin/auth/logout', {}, { headers: { Authorization: `Bearer ${localStorage.getItem('userToken')}` } })
             localStorage.removeItem('userToken')
             navigate('/login')
             toast.success('logged Out Successfully', { duration: 2000 })
@@ -54,7 +54,7 @@ export default function Sidebar() {
     const { data: currentUser, isLoading: isCurrentuserLoading, error, isError } = useQuery({
         queryKey: ['currentUser'],
         queryFn: () => {
-            return axios.get('https://nexus-consults.com/api/admin/auth/profile',
+            return axios.get('https://nexus-consults.com/api/public/api/admin/auth/profile',
                 {
                     headers: {
                         Authorization: `Bearer ${localStorage.getItem('userToken')}`

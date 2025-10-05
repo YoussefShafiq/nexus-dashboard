@@ -104,7 +104,7 @@ export default function ServicesDataTable({ services, loading, refetch }) {
     const { data: currentUser, isLoading: isCurrentuserLoading } = useQuery({
         queryKey: ['currentUser'],
         queryFn: () => {
-            return axios.get('https://nexus-consults.com/api/admin/auth/profile',
+            return axios.get('https://nexus-consults.com/api/public/api/admin/auth/profile',
                 {
                     headers: {
                         Authorization: `Bearer ${localStorage.getItem('userToken')}`
@@ -119,7 +119,7 @@ export default function ServicesDataTable({ services, loading, refetch }) {
         queryFn: () => {
             if (!editingServiceId) return Promise.resolve(null);
             return axios.get(
-                `https://nexus-consults.com/api/admin/services/${editingServiceId}`,
+                `https://nexus-consults.com/api/public/api/admin/services/${editingServiceId}`,
                 {
                     headers: {
                         Authorization: `Bearer ${localStorage.getItem('userToken')}`
@@ -333,7 +333,7 @@ export default function ServicesDataTable({ services, loading, refetch }) {
         setTogglingServiceId(serviceId);
         try {
             await axios.patch(
-                `https://nexus-consults.com/api/admin/services/${serviceId}/toggle-active`,
+                `https://nexus-consults.com/api/public/api/admin/services/${serviceId}/toggle-active`,
                 {},
                 {
                     headers: {
@@ -371,7 +371,7 @@ export default function ServicesDataTable({ services, loading, refetch }) {
 
         try {
             await axios.delete(
-                `https://nexus-consults.com/api/admin/services/${serviceToDelete}`,
+                `https://nexus-consults.com/api/public/api/admin/services/${serviceToDelete}`,
                 {
                     headers: {
                         Authorization: `Bearer ${localStorage.getItem('userToken')}`
@@ -601,7 +601,7 @@ export default function ServicesDataTable({ services, loading, refetch }) {
             formDataToSend.append('description', formData.description);
 
             await axios.post(
-                'https://nexus-consults.com/api/admin/services',
+                'https://nexus-consults.com/api/public/api/admin/services',
                 formDataToSend,
                 {
                     headers: {
@@ -683,7 +683,7 @@ export default function ServicesDataTable({ services, loading, refetch }) {
             }
 
             await axios.post(
-                `https://nexus-consults.com/api/admin/services/${editFormData.id}`,
+                `https://nexus-consults.com/api/public/api/admin/services/${editFormData.id}`,
                 formDataToSend,
                 {
                     headers: {
@@ -842,7 +842,7 @@ export default function ServicesDataTable({ services, loading, refetch }) {
 
         try {
             setIsBulkActionLoading(true);
-            await axios.post('https://nexus-consults.com/api/admin/services/bulk/delete',
+            await axios.post('https://nexus-consults.com/api/public/api/admin/services/bulk/delete',
                 { ids: selectedServices },
                 {
                     headers: {
@@ -868,7 +868,7 @@ export default function ServicesDataTable({ services, loading, refetch }) {
 
         try {
             setIsBulkActionLoading(true);
-            await axios.post('https://nexus-consults.com/api/admin/services/bulk/update-status',
+            await axios.post('https://nexus-consults.com/api/public/api/admin/services/bulk/update-status',
                 {
                     ids: selectedServices,
                     status: status
