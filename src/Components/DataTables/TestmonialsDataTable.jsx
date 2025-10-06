@@ -65,7 +65,8 @@ export default function TestmonialsDataTable({ testmonialsData, loading, refetch
         title: '',
         message: '',
         image: null,
-        imagePreview: ''
+        imagePreview: '',
+        removeImage: false // New state to track image removal
     });
 
     // File input ref
@@ -159,7 +160,8 @@ export default function TestmonialsDataTable({ testmonialsData, loading, refetch
             title: '',
             message: '',
             image: null,
-            imagePreview: ''
+            imagePreview: '',
+            removeImage: false
         });
         setShowAddEditModal(true);
     };
@@ -173,7 +175,8 @@ export default function TestmonialsDataTable({ testmonialsData, loading, refetch
             title: testmonial.title || '',
             message: testmonial.message || '',
             image: null,
-            imagePreview: testmonial.image || ''
+            imagePreview: testmonial.image || '',
+            removeImage: false
         });
         setShowAddEditModal(true);
     };
@@ -186,7 +189,8 @@ export default function TestmonialsDataTable({ testmonialsData, loading, refetch
                 name: testmonialDetails.name || prev.name,
                 title: testmonialDetails.title || prev.title,
                 message: testmonialDetails.message || prev.message,
-                imagePreview: testmonialDetails.image || prev.imagePreview
+                imagePreview: testmonialDetails.image || prev.imagePreview,
+                removeImage: false
             }));
         }
     }, [isEditing, testmonialDetails]);
@@ -209,7 +213,8 @@ export default function TestmonialsDataTable({ testmonialsData, loading, refetch
             setFormData(prev => ({
                 ...prev,
                 image: file,
-                imagePreview: URL.createObjectURL(file)
+                imagePreview: URL.createObjectURL(file),
+                removeImage: false // Reset removeImage when new image is selected
             }));
         }
     };
@@ -218,7 +223,8 @@ export default function TestmonialsDataTable({ testmonialsData, loading, refetch
         setFormData(prev => ({
             ...prev,
             image: null,
-            imagePreview: ''
+            imagePreview: '',
+            removeImage: true // Set flag to indicate image should be removed
         }));
         if (fileInputRef.current) {
             fileInputRef.current.value = '';
@@ -233,6 +239,10 @@ export default function TestmonialsDataTable({ testmonialsData, loading, refetch
             data.append('message', formData.message);
             if (formData.image) {
                 data.append('image', formData.image);
+            }
+            // For new testimonials, if no image is provided, set default
+            if (!formData.image) {
+                data.append('image', '');
             }
 
             return axios.post(
@@ -269,9 +279,18 @@ export default function TestmonialsDataTable({ testmonialsData, loading, refetch
             data.append('name', formData.name);
             data.append('title', formData.title);
             data.append('message', formData.message);
-            if (formData.image) {
+
+            // Handle image based on removeImage flag
+            if (formData.removeImage) {
+                // Send '' as string when image is removed
+                data.append('image', '');
+            } else if (formData.image) {
+                // Send new image file if selected
                 data.append('image', formData.image);
             }
+            // If neither removeImage is true nor new image is selected, 
+            // the existing image will be preserved (no image field sent)
+
             data.append('_method', 'PUT');
 
             return axios.post(
@@ -878,6 +897,11 @@ export default function TestmonialsDataTable({ testmonialsData, loading, refetch
                                                 </p>
                                             </div>
                                         </div>
+                                        {formData.removeImage && (
+                                            <p className="text-xs text-blue-600 mt-1">
+                                                Image will be set to default
+                                            </p>
+                                        )}
                                     </div>
 
                                     {/* Name */}
