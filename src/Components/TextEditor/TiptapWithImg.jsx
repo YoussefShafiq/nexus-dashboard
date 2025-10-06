@@ -849,7 +849,6 @@ const MenuBar = ({ uploadImgUrl = '', uploadVideoUrl = 'https://api.nexus.com/ap
 
         // Insert YouTube video using the YouTubeVideoExtension
         try {
-            console.log('Inserting YouTube video for video ID:', youtubeId);
 
             // Use the YouTubeVideoExtension to insert the YouTube video
             editor.chain().focus().setYouTubeVideo({
@@ -861,12 +860,10 @@ const MenuBar = ({ uploadImgUrl = '', uploadVideoUrl = 'https://api.nexus.com/ap
                 height: '400'
             }).run();
 
-            console.log('YouTube video inserted successfully');
 
             // Debug: check what was actually inserted
             setTimeout(() => {
                 const currentContent = editor.getHTML();
-                console.log('Current editor content after insertion:', currentContent);
             }, 100);
 
         } catch (error) {

@@ -23,11 +23,10 @@ export default function Admins() {
         queryKey: ['admins'],
         queryFn: getAdminsData,
         onError: () => {
-            console.log(error);
-            // if (error.response?.status == 401) {
-            //     localStorage.removeItem('userToken')
-            //     navigate('/login')
-            // }
+            if (error.response?.status == 401) {
+                localStorage.removeItem('userToken')
+                navigate('/login')
+            }
         }
     })
 
@@ -61,7 +60,6 @@ export default function Admins() {
     }, [isError])
 
     useEffect(() => {
-        console.log(permissions);
 
     }, [permissions, perError])
 

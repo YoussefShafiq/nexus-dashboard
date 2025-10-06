@@ -37,10 +37,8 @@ export default function Sidebar() {
             if (error.status == 401) {
                 localStorage.removeItem('userToken')
                 navigate('/login')
-                console.log('error to out');
 
             }
-            console.log(error.status);
 
             setloggingOut(false)
             toast.error(error.response?.data?.message || 'something went wrong', { duration: 3000 });

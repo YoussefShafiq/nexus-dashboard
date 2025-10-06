@@ -26,7 +26,6 @@ export default function Login() {
                 duration: 5000,
             })
             setloading(false)
-            console.log(error?.response?.data?.message);
         }
     }
 

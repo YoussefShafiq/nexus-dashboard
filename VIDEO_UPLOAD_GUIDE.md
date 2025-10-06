@@ -29,11 +29,11 @@ import TiptapWithImg from './Components/TextEditor/TiptapWithImg';
 
 function MyComponent() {
     const handleUpdate = (html) => {
-        console.log('Editor content:', html);
+        // console.log('Editor content:', html);
     };
 
     const handleHeadingsUpdate = (headings) => {
-        console.log('Headings:', headings);
+        // console.log('Headings:', headings);
     };
 
     return (
