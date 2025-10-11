@@ -33,7 +33,7 @@ import { useNavigate } from 'react-router-dom';
 import localforage from 'localforage';
 import { XCircle } from 'lucide-react';
 
-export default function ServicesDataTable({ services, loading, refetch }) {
+export default function ServicesDataTable({ services, disciplinesData, loading, refetch }) {
     const navigate = useNavigate();
     const queryClient = useQueryClient();
     const [selectedServices, setSelectedServices] = useState([]);
@@ -77,6 +77,7 @@ export default function ServicesDataTable({ services, loading, refetch }) {
         image2: null,
         content3: '',
         image3: null,
+        disciplines: [],
         // tags: []
     });
 
@@ -97,6 +98,7 @@ export default function ServicesDataTable({ services, loading, refetch }) {
         content3: '',
         image3: null,
         existing_image3: null,
+        disciplines: [],
         // tags: []
     });
 
@@ -226,12 +228,14 @@ export default function ServicesDataTable({ services, loading, refetch }) {
             (formData.content2 && formData.content2.trim() !== '') ||
             (formData.content3 && formData.content3.trim() !== '');
         if (!hasContent) return null;
+
         // Reuse existing draft id by preference: activeDraftId, then existing by slug
         let id = activeDraftId;
         if (!id && formData.slug) {
             const existing = drafts.find(d => d.slug === formData.slug);
             if (existing) id = existing.id;
         }
+
         return {
             id: id || `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
             title: formData.title,
@@ -241,12 +245,11 @@ export default function ServicesDataTable({ services, loading, refetch }) {
             content1: formData.content1,
             content2: formData.content2,
             content3: formData.content3,
-            // images cannot be persisted; store only name/type hint
+            disciplines: formData.disciplines || [], // ADD THIS
             cover_photo_meta: formData.cover_photo ? { name: formData.cover_photo.name, type: formData.cover_photo.type, size: formData.cover_photo.size } : null,
             image1_meta: formData.image1 ? { name: formData.image1.name, type: formData.image1.type, size: formData.image1.size } : null,
             image2_meta: formData.image2 ? { name: formData.image2.name, type: formData.image2.type, size: formData.image2.size } : null,
             image3_meta: formData.image3 ? { name: formData.image3.name, type: formData.image3.type, size: formData.image3.size } : null,
-            // tags: formData.tags || []
         };
     };
 
@@ -267,11 +270,11 @@ export default function ServicesDataTable({ services, loading, refetch }) {
             content1: draft.content1 || '',
             content2: draft.content2 || '',
             content3: draft.content3 || '',
+            disciplines: draft.disciplines || [], // ADD THIS
             cover_photo: null,
             image1: null,
             image2: null,
             image3: null,
-            // tags: draft.tags || []
         });
         setIsSlugManuallyEdited(true);
         setActiveDraftId(draft.id);
@@ -279,18 +282,34 @@ export default function ServicesDataTable({ services, loading, refetch }) {
         toast('Draft loaded');
     };
 
-    // Auto-save while Add modal is open
+    // Add this ref at the top with your other refs
     const addAutoSaveInterval = useRef(null);
+    const lastAutoSaveRef = useRef(''); // ADD THIS LINE
+
+    // Auto-save while Add modal is open
     useEffect(() => {
         if (showAddModal) {
             // start interval
             addAutoSaveInterval.current = setInterval(() => {
                 const draft = makeDraftFromForm();
                 if (draft) {
-                    setActiveDraftId(prev => prev || draft.id);
-                    upsertDraft(draft);
+                    // Include disciplines in the content check
+                    const currentContent = JSON.stringify({
+                        title: draft.title,
+                        description: draft.description,
+                        content1: draft.content1,
+                        content2: draft.content2,
+                        content3: draft.content3,
+                        disciplines: draft.disciplines
+                    });
+
+                    if (currentContent !== lastAutoSaveRef.current) {
+                        setActiveDraftId(prev => prev || draft.id);
+                        upsertDraft(draft);
+                        lastAutoSaveRef.current = currentContent;
+                    }
                 }
-            }, 5000); // 5s
+            }, 5000);
 
             const onBeforeUnload = () => {
                 const draft = makeDraftFromForm();
@@ -308,9 +327,11 @@ export default function ServicesDataTable({ services, loading, refetch }) {
             return () => {
                 if (addAutoSaveInterval.current) clearInterval(addAutoSaveInterval.current);
                 window.removeEventListener('beforeunload', onBeforeUnload);
+                lastAutoSaveRef.current = ''; // ADD THIS LINE
             };
         } else {
             if (addAutoSaveInterval.current) clearInterval(addAutoSaveInterval.current);
+            lastAutoSaveRef.current = ''; // ADD THIS LINE
         }
     }, [showAddModal]);
 
@@ -486,6 +507,26 @@ export default function ServicesDataTable({ services, loading, refetch }) {
         setIsEditSlugManuallyEdited(false);
     };
 
+    // Handle disciplines selection for create form
+    const handleDisciplinesChange = (disciplineId, isChecked) => {
+        setFormData(prev => ({
+            ...prev,
+            disciplines: isChecked
+                ? [...prev.disciplines, disciplineId]
+                : prev.disciplines.filter(id => id !== disciplineId)
+        }));
+    };
+
+    // Handle disciplines selection for edit form
+    const handleEditDisciplinesChange = (disciplineId, isChecked) => {
+        setEditFormData(prev => ({
+            ...prev,
+            disciplines: isChecked
+                ? [...prev.disciplines, disciplineId]
+                : prev.disciplines.filter(id => id !== disciplineId)
+        }));
+    };
+
     // const handletagsChange = (e) => {
     //     setFormData(prev => ({
     //         ...prev,
@@ -537,7 +578,7 @@ export default function ServicesDataTable({ services, loading, refetch }) {
             image2: null,
             content3: '',
             image3: null,
-            // tags: []
+            disciplines: []
         });
         setIsSlugManuallyEdited(false);
     };
@@ -550,7 +591,6 @@ export default function ServicesDataTable({ services, loading, refetch }) {
     // Effect to populate edit form when service data is fetched
     useEffect(() => {
         if (serviceData && editingServiceId) {
-            // Map sections data to individual content and image fields
             const sections = serviceData.sections || [];
             setEditFormData({
                 id: serviceData.id,
@@ -569,7 +609,7 @@ export default function ServicesDataTable({ services, loading, refetch }) {
                 content3: sections[2]?.content || '',
                 image3: null,
                 existing_image3: sections[2]?.image || null,
-                // tags: serviceData.tags || []
+                disciplines: serviceData.disciplines?.map(d => d.id) || [] // ADD THIS
             });
             setIsEditSlugManuallyEdited(true);
             setShowEditModal(true);
@@ -588,6 +628,10 @@ export default function ServicesDataTable({ services, loading, refetch }) {
             formDataToSend.append('content1', formData.content1);
             formDataToSend.append('content2', formData.content2);
             formDataToSend.append('content3', formData.content3);
+
+            formData.disciplines.forEach(disciplineId => {
+                formDataToSend.append('disciplines[]', disciplineId);
+            });
 
             // formData.tags.forEach(tag => {
             //     formDataToSend.append('tags[]', tag);
@@ -646,6 +690,10 @@ export default function ServicesDataTable({ services, loading, refetch }) {
             formDataToSend.append('content3', editFormData.content3);
             formDataToSend.append('description', editFormData.description);
             formDataToSend.append('_method', 'POST');
+
+            editFormData.disciplines.forEach(disciplineId => {
+                formDataToSend.append('disciplines[]', disciplineId);
+            });
 
             // editFormData.tags.forEach(tag => {
             //     formDataToSend.append('tags[]', tag);
@@ -1421,6 +1469,32 @@ export default function ServicesDataTable({ services, loading, refetch }) {
                                         </label>
                                     </div>
                                 </div>
+                                {/* Disciplines Checkboxes */}
+                                <div className="mb-4">
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">Disciplines</label>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 max-h-48 overflow-y-auto p-2 border rounded-md">
+                                        {disciplinesData?.map((discipline) => (
+                                            <div key={discipline.id} className="flex items-center">
+                                                <input
+                                                    type="checkbox"
+                                                    id={`discipline-${discipline.id}`}
+                                                    checked={formData.disciplines.includes(discipline.id)}
+                                                    onChange={(e) => handleDisciplinesChange(discipline.id, e.target.checked)}
+                                                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                                                />
+                                                <label htmlFor={`discipline-${discipline.id}`} className="ml-2 text-sm text-gray-700">
+                                                    {discipline.title}
+                                                    {!discipline.is_active && (
+                                                        <span className="ml-1 text-xs text-orange-600">(inactive)</span>
+                                                    )}
+                                                </label>
+                                            </div>
+                                        ))}
+                                        {(!disciplinesData || disciplinesData.length === 0) && (
+                                            <div className="text-sm text-gray-500 col-span-full">No disciplines available</div>
+                                        )}
+                                    </div>
+                                </div>
                                 {/* 
                                 <div className="mb-4">
                                     <label htmlFor="tags" className="block text-sm font-medium mb-1">Tags</label>
@@ -1686,7 +1760,34 @@ export default function ServicesDataTable({ services, loading, refetch }) {
                                             </label>
                                         </div>
                                     </div>
-{/* 
+
+                                    {/* Disciplines Checkboxes for Edit */}
+                                    <div className="mb-4">
+                                        <label className="block text-sm font-medium text-gray-700 mb-2">Disciplines</label>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 max-h-48 overflow-y-auto p-2 border rounded-md">
+                                            {disciplinesData?.map((discipline) => (
+                                                <div key={discipline.id} className="flex items-center">
+                                                    <input
+                                                        type="checkbox"
+                                                        id={`edit-discipline-${discipline.id}`}
+                                                        checked={editFormData.disciplines.includes(discipline.id)}
+                                                        onChange={(e) => handleEditDisciplinesChange(discipline.id, e.target.checked)}
+                                                        className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                                                    />
+                                                    <label htmlFor={`edit-discipline-${discipline.id}`} className="ml-2 text-sm text-gray-700">
+                                                        {discipline.title}
+                                                        {!discipline.is_active && (
+                                                            <span className="ml-1 text-xs text-orange-600">(inactive)</span>
+                                                        )}
+                                                    </label>
+                                                </div>
+                                            ))}
+                                            {(!disciplinesData || disciplinesData.length === 0) && (
+                                                <div className="text-sm text-gray-500 col-span-full">No disciplines available</div>
+                                            )}
+                                        </div>
+                                    </div>
+                                    {/* 
                                     <div className="mb-4">
                                         <label htmlFor="tags" className="block text-sm font-medium mb-1">Tags</label>
                                         <Chips

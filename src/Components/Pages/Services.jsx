@@ -8,6 +8,18 @@ import ServicesDataTable from '../DataTables/ServicesDataTable';
 export default function Services() {
     const navigate = useNavigate();
 
+    const { data: disciplinesData, isLoading: disciplinesLoading, isError: disciplinesIsError, error: disciplinesError, refetch: disciplinesRefetch } = useQuery({
+        queryKey: ['disciplines'],
+        queryFn: () => {
+            return axios.get('https://nexus-consults.com/api/public/api/admin/disciplines',
+                {
+                    headers: {
+                        Authorization: `Bearer ${localStorage.getItem('userToken')}`
+                    }
+                })
+        }
+
+    })
 
     function getAllServices() {
         return axios.get(
@@ -42,8 +54,8 @@ export default function Services() {
         <div className="p-4">
             <h1 className="text-3xl font-bold text-gray-800 mb-8">Services</h1>
             <ServicesDataTable
-
                 services={services?.data?.data || []}
+                disciplinesData={disciplinesData?.data?.data || []}
                 loading={isLoading}
                 refetch={refetch}
             />

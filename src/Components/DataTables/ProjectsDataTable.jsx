@@ -607,7 +607,7 @@ export default function ProjectsDataTable({ projects, disciplinesData, loading, 
                 content3: sections[2]?.content || '',
                 image3: null,
                 existing_image3: sections[2]?.image || null,
-                disciplines: projectData.disciplines?.map(d => d.id) || []
+                disciplines: projectData.disciplines ? projectData.disciplines.map(d => d.id) : []
                 // tags: projectData.tags || []
             });
             setIsEditSlugManuallyEdited(true);
@@ -1742,7 +1742,8 @@ export default function ProjectsDataTable({ projects, disciplinesData, loading, 
                                                     <input
                                                         type="checkbox"
                                                         id={`edit-discipline-${discipline.id}`}
-                                                        checked={editFormData.disciplines.includes(discipline.id)}
+                                                        // Check if this discipline ID exists in the editFormData.disciplines array
+                                                        checked={editFormData.disciplines?.includes(discipline.id)}
                                                         onChange={(e) => handleEditDisciplinesChange(discipline.id, e.target.checked)}
                                                         className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                                                     />
