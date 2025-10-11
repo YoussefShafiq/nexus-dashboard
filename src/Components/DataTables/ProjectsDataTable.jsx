@@ -33,7 +33,7 @@ import { useNavigate } from 'react-router-dom';
 import localforage from 'localforage';
 import { XCircle } from 'lucide-react';
 
-export default function ProjectsDataTable({ projects, loading, refetch }) {
+export default function ProjectsDataTable({ projects, disciplinesData, loading, refetch }) {
     const navigate = useNavigate();
     const queryClient = useQueryClient();
     const [selectedProjects, setSelectedProjects] = useState([]);
@@ -77,7 +77,8 @@ export default function ProjectsDataTable({ projects, loading, refetch }) {
         image2: null,
         content3: '',
         image3: null,
-        tags: []
+        disciplines: []
+        // tags: []
     });
 
     const [editFormData, setEditFormData] = useState({
@@ -97,7 +98,8 @@ export default function ProjectsDataTable({ projects, loading, refetch }) {
         content3: '',
         image3: null,
         existing_image3: null,
-        tags: []
+        disciplines: []
+        // tags: []
     });
 
     // Fetch current user for permissions
@@ -219,19 +221,20 @@ export default function ProjectsDataTable({ projects, loading, refetch }) {
     }, []);
 
     const makeDraftFromForm = () => {
-        // Avoid saving empty drafts
         const hasContent = (formData.title && formData.title.trim() !== '') ||
             (formData.description && formData.description.trim() !== '') ||
             (formData.content1 && formData.content1.trim() !== '') ||
             (formData.content2 && formData.content2.trim() !== '') ||
             (formData.content3 && formData.content3.trim() !== '');
         if (!hasContent) return null;
-        // Reuse existing draft id by preference: activeDraftId, then existing by slug
+
+        // FIX: Define id properly
         let id = activeDraftId;
         if (!id && formData.slug) {
             const existing = drafts.find(d => d.slug === formData.slug);
             if (existing) id = existing.id;
         }
+
         return {
             id: id || `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
             title: formData.title,
@@ -241,12 +244,11 @@ export default function ProjectsDataTable({ projects, loading, refetch }) {
             content1: formData.content1,
             content2: formData.content2,
             content3: formData.content3,
-            // images cannot be persisted; store only name/type hint
+            disciplines: formData.disciplines || [], // ADD THIS
             cover_photo_meta: formData.cover_photo ? { name: formData.cover_photo.name, type: formData.cover_photo.type, size: formData.cover_photo.size } : null,
             image1_meta: formData.image1 ? { name: formData.image1.name, type: formData.image1.type, size: formData.image1.size } : null,
             image2_meta: formData.image2 ? { name: formData.image2.name, type: formData.image2.type, size: formData.image2.size } : null,
             image3_meta: formData.image3 ? { name: formData.image3.name, type: formData.image3.type, size: formData.image3.size } : null,
-            tags: formData.tags || []
         };
     };
 
@@ -267,11 +269,12 @@ export default function ProjectsDataTable({ projects, loading, refetch }) {
             content1: draft.content1 || '',
             content2: draft.content2 || '',
             content3: draft.content3 || '',
+            disciplines: draft.disciplines || [], // ADD THIS
             cover_photo: null,
             image1: null,
             image2: null,
             image3: null,
-            tags: draft.tags || []
+            // tags: draft.tags || []
         });
         setIsSlugManuallyEdited(true);
         setShowAddModal(true);
@@ -288,14 +291,13 @@ export default function ProjectsDataTable({ projects, loading, refetch }) {
             addAutoSaveInterval.current = setInterval(() => {
                 const draft = makeDraftFromForm();
                 if (draft) {
-                    // Only save if content has actually changed
                     const currentContent = JSON.stringify({
                         title: draft.title,
                         description: draft.description,
                         content1: draft.content1,
                         content2: draft.content2,
                         content3: draft.content3,
-                        tags: draft.tags
+                        disciplines: draft.disciplines // ADD THIS
                     });
 
                     if (currentContent !== lastAutoSaveRef.current) {
@@ -304,7 +306,7 @@ export default function ProjectsDataTable({ projects, loading, refetch }) {
                         lastAutoSaveRef.current = currentContent;
                     }
                 }
-            }, 5000); // 5s
+            }, 5000);
 
             const onBeforeUnload = () => {
                 const draft = makeDraftFromForm();
@@ -501,19 +503,39 @@ export default function ProjectsDataTable({ projects, loading, refetch }) {
         setIsEditSlugManuallyEdited(false);
     };
 
-    const handletagsChange = (e) => {
+    // Handle disciplines selection for create form
+    const handleDisciplinesChange = (disciplineId, isChecked) => {
         setFormData(prev => ({
             ...prev,
-            tags: e.value
+            disciplines: isChecked
+                ? [...prev.disciplines, disciplineId]
+                : prev.disciplines.filter(id => id !== disciplineId)
         }));
     };
 
-    const handleEdittagsChange = (e) => {
+    // Handle disciplines selection for edit form
+    const handleEditDisciplinesChange = (disciplineId, isChecked) => {
         setEditFormData(prev => ({
             ...prev,
-            tags: e.value
+            disciplines: isChecked
+                ? [...prev.disciplines, disciplineId]
+                : prev.disciplines.filter(id => id !== disciplineId)
         }));
     };
+
+    // const handletagsChange = (e) => {
+    //     setFormData(prev => ({
+    //         ...prev,
+    //         tags: e.value
+    //     }));
+    // };
+
+    // const handleEdittagsChange = (e) => {
+    //     setEditFormData(prev => ({
+    //         ...prev,
+    //         tags: e.value
+    //     }));
+    // };
 
     // Handle content change for individual content fields
     const handleContent1Change = (content) => {
@@ -552,7 +574,8 @@ export default function ProjectsDataTable({ projects, loading, refetch }) {
             image2: null,
             content3: '',
             image3: null,
-            tags: []
+            disciplines: [] // ADD THIS
+            // tags: []
         });
         setIsSlugManuallyEdited(false);
     };
@@ -563,9 +586,9 @@ export default function ProjectsDataTable({ projects, loading, refetch }) {
     };
 
     // Effect to populate edit form when project data is fetched
+    // Effect to populate edit form when project data is fetched
     useEffect(() => {
         if (projectData && editingProjectId) {
-            // Map sections data to individual content and image fields
             const sections = projectData.sections || [];
             setEditFormData({
                 id: projectData.id,
@@ -584,7 +607,8 @@ export default function ProjectsDataTable({ projects, loading, refetch }) {
                 content3: sections[2]?.content || '',
                 image3: null,
                 existing_image3: sections[2]?.image || null,
-                tags: projectData.tags || []
+                disciplines: projectData.disciplines?.map(d => d.id) || []
+                // tags: projectData.tags || []
             });
             setIsEditSlugManuallyEdited(true);
             setShowEditModal(true);
@@ -604,9 +628,14 @@ export default function ProjectsDataTable({ projects, loading, refetch }) {
             formDataToSend.append('content2', formData.content2);
             formDataToSend.append('content3', formData.content3);
 
-            formData.tags.forEach(tag => {
-                formDataToSend.append('tags[]', tag);
+            // ADD DISCIPLINES
+            formData.disciplines.forEach(disciplineId => {
+                formDataToSend.append('disciplines[]', disciplineId);
             });
+
+            // formData.tags.forEach(tag => {
+            //     formDataToSend.append('tags[]', tag);
+            // });
 
             formDataToSend.append('cover_photo', formData.cover_photo || '');
             formDataToSend.append('image1', formData.image1 || '');
@@ -662,9 +691,14 @@ export default function ProjectsDataTable({ projects, loading, refetch }) {
             formDataToSend.append('description', editFormData.description);
             formDataToSend.append('_method', 'POST');
 
-            editFormData.tags.forEach(tag => {
-                formDataToSend.append('tags[]', tag);
+            // ADD DISCIPLINES
+            editFormData.disciplines.forEach(disciplineId => {
+                formDataToSend.append('disciplines[]', disciplineId);
             });
+
+            // editFormData.tags.forEach(tag => {
+            //     formDataToSend.append('tags[]', tag);
+            // });
 
             // Only append images if they have been changed (new file selected)
             // For cover_photo
@@ -1115,14 +1149,14 @@ export default function ProjectsDataTable({ projects, loading, refetch }) {
                                                 )}
                                             </button>}
                                             <button
-                                                className={`${project.is_active ? 'text-red-500 hover:text-red-700' : 'text-green-500 hover:text-green-700'} p-1`}
+                                                className={`${!project.is_active ? 'text-red-500 hover:text-red-700' : 'text-green-500 hover:text-green-700'} p-1`}
                                                 onClick={() => handleToggleStatus(project.id, project.is_active)}
                                                 disabled={togglingProjectId === project.id}
                                             >
                                                 {togglingProjectId === project.id ? (
                                                     <FaSpinner className="animate-spin" size={18} />
                                                 ) : (
-                                                    project.is_active ? <FaTimes /> : <FaCheck />
+                                                    !project.is_active ? <FaTimes /> : <FaCheck />
                                                 )}
                                             </button>
                                             {currentUser?.data?.data?.admin?.permissions?.includes('delete_projects') && <button
@@ -1412,8 +1446,34 @@ export default function ProjectsDataTable({ projects, loading, refetch }) {
                                         </label>
                                     </div>
                                 </div>
-
+                                {/* Disciplines Checkboxes */}
                                 <div className="mb-4">
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">Disciplines</label>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 max-h-48 overflow-y-auto p-2 border rounded-md">
+                                        {disciplinesData?.map((discipline) => (
+                                            <div key={discipline.id} className="flex items-center">
+                                                <input
+                                                    type="checkbox"
+                                                    id={`discipline-${discipline.id}`}
+                                                    checked={formData.disciplines.includes(discipline.id)}
+                                                    onChange={(e) => handleDisciplinesChange(discipline.id, e.target.checked)}
+                                                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                                                />
+                                                <label htmlFor={`discipline-${discipline.id}`} className="ml-2 text-sm text-gray-700">
+                                                    {discipline.title}
+                                                    {!discipline.is_active && (
+                                                        <span className="ml-1 text-xs text-orange-600">(inactive)</span>
+                                                    )}
+                                                </label>
+                                            </div>
+                                        ))}
+                                        {(!disciplinesData || disciplinesData.length === 0) && (
+                                            <div className="text-sm text-gray-500 col-span-full">No disciplines available</div>
+                                        )}
+                                    </div>
+                                </div>
+
+                                {/* <div className="mb-4">
                                     <label htmlFor="tags" className="block text-sm font-medium mb-1">Tags</label>
                                     <Chips
                                         id="tags"
@@ -1428,7 +1488,7 @@ export default function ProjectsDataTable({ projects, loading, refetch }) {
                                             </div>
                                         )}
                                     />
-                                </div>
+                                </div> */}
 
                                 {/* Content and Image Sections */}
                                 <div className="space-y-6">
@@ -1673,7 +1733,33 @@ export default function ProjectsDataTable({ projects, loading, refetch }) {
                                             </label>
                                         </div>
                                     </div>
-
+                                    {/* Disciplines Checkboxes for Edit */}
+                                    <div className="mb-4">
+                                        <label className="block text-sm font-medium text-gray-700 mb-2">Disciplines</label>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 max-h-48 overflow-y-auto p-2 border rounded-md">
+                                            {disciplinesData?.map((discipline) => (
+                                                <div key={discipline.id} className="flex items-center">
+                                                    <input
+                                                        type="checkbox"
+                                                        id={`edit-discipline-${discipline.id}`}
+                                                        checked={editFormData.disciplines.includes(discipline.id)}
+                                                        onChange={(e) => handleEditDisciplinesChange(discipline.id, e.target.checked)}
+                                                        className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                                                    />
+                                                    <label htmlFor={`edit-discipline-${discipline.id}`} className="ml-2 text-sm text-gray-700">
+                                                        {discipline.title}
+                                                        {!discipline.is_active && (
+                                                            <span className="ml-1 text-xs text-orange-600">(inactive)</span>
+                                                        )}
+                                                    </label>
+                                                </div>
+                                            ))}
+                                            {(!disciplinesData || disciplinesData.length === 0) && (
+                                                <div className="text-sm text-gray-500 col-span-full">No disciplines available</div>
+                                            )}
+                                        </div>
+                                    </div>
+                                    {/* 
                                     <div className="mb-4">
                                         <label htmlFor="tags" className="block text-sm font-medium mb-1">Tags</label>
                                         <Chips
@@ -1689,7 +1775,7 @@ export default function ProjectsDataTable({ projects, loading, refetch }) {
                                                 </div>
                                             )}
                                         />
-                                    </div>
+                                    </div> */}
 
                                     {/* Content and Image Sections */}
                                     <div className="space-y-6">

@@ -1302,14 +1302,14 @@ export default function BlogsDataTable({ blogs, loading, refetch }) {
                                                 <FaEdit size={18} />
                                             </button>}
                                             {currentUser?.data?.data?.admin?.permissions?.includes('edit_blogs') && <button
-                                                className={`${blog.is_active ? 'text-red-500 hover:text-red-700' : 'text-green-500 hover:text-green-700'} p-1`}
+                                                className={`${!blog.is_active ? 'text-red-500 hover:text-red-700' : 'text-green-500 hover:text-green-700'} p-1`}
                                                 onClick={() => handleToggleStatus(blog.id, blog.is_active)}
                                                 disabled={togglingBlogId === blog.id}
                                             >
                                                 {togglingBlogId === blog.id ? (
                                                     <FaSpinner className="animate-spin" size={18} />
                                                 ) : (
-                                                    blog.is_active ? <FaTimes /> : <FaCheck />
+                                                    !blog.is_active ? <FaTimes /> : <FaCheck />
                                                 )}
                                             </button>}
                                             {currentUser?.data?.data?.admin?.permissions?.includes('delete_blogs') && <button

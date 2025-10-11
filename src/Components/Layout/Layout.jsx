@@ -19,7 +19,7 @@ export function UserBar() {
         }
     });
     return <>
-        <div onClick={() => navigate('/user-setting')} className="absolute top-5 right-5 h-11 w-11 flex justify-center items-center rounded-full bg-white cursor-pointer shadow-lg">
+        <div onClick={() => navigate('/user-setting')} className="fixed top-5 right-5 h-11 w-11 flex justify-center items-center rounded-full bg-white cursor-pointer shadow-lg">
             {currentUser?.data?.data?.user?.profile_image ? <img
                 src={(currentUser?.data?.data?.user?.profile_image)}
                 alt="Profile"

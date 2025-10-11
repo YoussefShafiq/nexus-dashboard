@@ -18,6 +18,7 @@ import JobsApplications from './Components/Pages/JobsApplications'
 import Testmonials from './Components/Pages/Testmonials'
 import AboutUs from './Components/Pages/AboutUs'
 import UserSetting from './Components/Pages/UserSetting'
+import Disciplines from './Components/Pages/Disciplines'
 
 function App() {
 
@@ -35,6 +36,7 @@ function App() {
         { path: '/testmonials', element: <ProtectedRoute><Testmonials /></ProtectedRoute> },
         { path: '/about-us', element: <ProtectedRoute><AboutUs /></ProtectedRoute> },
         { path: '/user-setting', element: <ProtectedRoute><UserSetting /></ProtectedRoute> },
+        { path: '/disciplines', element: <ProtectedRoute><Disciplines /></ProtectedRoute> },
 
       ]
     },

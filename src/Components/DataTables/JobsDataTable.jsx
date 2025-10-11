@@ -946,14 +946,14 @@ export default function JobsDataTable({ jobs, loading, refetch }) {
                                                 )}
                                             </button>}
                                             <button
-                                                className={`${job.is_active ? 'text-red-500 hover:text-red-700' : 'text-green-500 hover:text-green-700'} p-1`}
+                                                className={`${!job.is_active ? 'text-red-500 hover:text-red-700' : 'text-green-500 hover:text-green-700'} p-1`}
                                                 onClick={() => handleToggleStatus(job.id, job.is_active)}
                                                 disabled={togglingJobId === job.id}
                                             >
                                                 {togglingJobId === job.id ? (
                                                     <FaSpinner className="animate-spin" size={18} />
                                                 ) : (
-                                                    job.is_active ? <FaTimes /> : <FaCheck />
+                                                    !job.is_active ? <FaTimes /> : <FaCheck />
                                                 )}
                                             </button>
                                             {currentUser?.data?.data?.admin?.permissions?.includes('delete_jobs') && <button

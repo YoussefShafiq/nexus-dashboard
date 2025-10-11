@@ -77,7 +77,7 @@ export default function ServicesDataTable({ services, loading, refetch }) {
         image2: null,
         content3: '',
         image3: null,
-        tags: []
+        // tags: []
     });
 
     const [editFormData, setEditFormData] = useState({
@@ -97,7 +97,7 @@ export default function ServicesDataTable({ services, loading, refetch }) {
         content3: '',
         image3: null,
         existing_image3: null,
-        tags: []
+        // tags: []
     });
 
     // Fetch current user for permissions
@@ -246,7 +246,7 @@ export default function ServicesDataTable({ services, loading, refetch }) {
             image1_meta: formData.image1 ? { name: formData.image1.name, type: formData.image1.type, size: formData.image1.size } : null,
             image2_meta: formData.image2 ? { name: formData.image2.name, type: formData.image2.type, size: formData.image2.size } : null,
             image3_meta: formData.image3 ? { name: formData.image3.name, type: formData.image3.type, size: formData.image3.size } : null,
-            tags: formData.tags || []
+            // tags: formData.tags || []
         };
     };
 
@@ -271,7 +271,7 @@ export default function ServicesDataTable({ services, loading, refetch }) {
             image1: null,
             image2: null,
             image3: null,
-            tags: draft.tags || []
+            // tags: draft.tags || []
         });
         setIsSlugManuallyEdited(true);
         setActiveDraftId(draft.id);
@@ -486,19 +486,19 @@ export default function ServicesDataTable({ services, loading, refetch }) {
         setIsEditSlugManuallyEdited(false);
     };
 
-    const handletagsChange = (e) => {
-        setFormData(prev => ({
-            ...prev,
-            tags: e.value
-        }));
-    };
+    // const handletagsChange = (e) => {
+    //     setFormData(prev => ({
+    //         ...prev,
+    //         tags: e.value
+    //     }));
+    // };
 
-    const handleEdittagsChange = (e) => {
-        setEditFormData(prev => ({
-            ...prev,
-            tags: e.value
-        }));
-    };
+    // const handleEdittagsChange = (e) => {
+    //     setEditFormData(prev => ({
+    //         ...prev,
+    //         tags: e.value
+    //     }));
+    // };
 
     // Handle content change for individual content fields
     const handleContent1Change = (content) => {
@@ -537,7 +537,7 @@ export default function ServicesDataTable({ services, loading, refetch }) {
             image2: null,
             content3: '',
             image3: null,
-            tags: []
+            // tags: []
         });
         setIsSlugManuallyEdited(false);
     };
@@ -569,7 +569,7 @@ export default function ServicesDataTable({ services, loading, refetch }) {
                 content3: sections[2]?.content || '',
                 image3: null,
                 existing_image3: sections[2]?.image || null,
-                tags: serviceData.tags || []
+                // tags: serviceData.tags || []
             });
             setIsEditSlugManuallyEdited(true);
             setShowEditModal(true);
@@ -589,9 +589,9 @@ export default function ServicesDataTable({ services, loading, refetch }) {
             formDataToSend.append('content2', formData.content2);
             formDataToSend.append('content3', formData.content3);
 
-            formData.tags.forEach(tag => {
-                formDataToSend.append('tags[]', tag);
-            });
+            // formData.tags.forEach(tag => {
+            //     formDataToSend.append('tags[]', tag);
+            // });
 
             formDataToSend.append('cover_photo', formData.cover_photo || '');
             formDataToSend.append('image1', formData.image1 || '');
@@ -647,9 +647,9 @@ export default function ServicesDataTable({ services, loading, refetch }) {
             formDataToSend.append('description', editFormData.description);
             formDataToSend.append('_method', 'POST');
 
-            editFormData.tags.forEach(tag => {
-                formDataToSend.append('tags[]', tag);
-            });
+            // editFormData.tags.forEach(tag => {
+            //     formDataToSend.append('tags[]', tag);
+            // });
 
             // Only append images if they have been changed (new file selected)
             // For cover_photo
@@ -1123,14 +1123,14 @@ export default function ServicesDataTable({ services, loading, refetch }) {
                                                 )}
                                             </button>}
                                             <button
-                                                className={`${service.is_active ? 'text-red-500 hover:text-red-700' : 'text-green-500 hover:text-green-700'} p-1`}
+                                                className={`${!service.is_active ? 'text-red-500 hover:text-red-700' : 'text-green-500 hover:text-green-700'} p-1`}
                                                 onClick={() => handleToggleStatus(service.id, service.is_active)}
                                                 disabled={togglingServiceId === service.id}
                                             >
                                                 {togglingServiceId === service.id ? (
                                                     <FaSpinner className="animate-spin" size={18} />
                                                 ) : (
-                                                    service.is_active ? <FaTimes /> : <FaCheck />
+                                                    !service.is_active ? <FaTimes /> : <FaCheck />
                                                 )}
                                             </button>
                                             {currentUser?.data?.data?.admin?.permissions?.includes('delete_services') && <button
@@ -1421,7 +1421,7 @@ export default function ServicesDataTable({ services, loading, refetch }) {
                                         </label>
                                     </div>
                                 </div>
-
+                                {/* 
                                 <div className="mb-4">
                                     <label htmlFor="tags" className="block text-sm font-medium mb-1">Tags</label>
                                     <Chips
@@ -1437,7 +1437,7 @@ export default function ServicesDataTable({ services, loading, refetch }) {
                                             </div>
                                         )}
                                     />
-                                </div>
+                                </div> */}
 
                                 {/* Content and Image Sections */}
                                 <div className="space-y-6">
@@ -1686,7 +1686,7 @@ export default function ServicesDataTable({ services, loading, refetch }) {
                                             </label>
                                         </div>
                                     </div>
-
+{/* 
                                     <div className="mb-4">
                                         <label htmlFor="tags" className="block text-sm font-medium mb-1">Tags</label>
                                         <Chips
@@ -1702,7 +1702,7 @@ export default function ServicesDataTable({ services, loading, refetch }) {
                                                 </div>
                                             )}
                                         />
-                                    </div>
+                                    </div> */}
 
                                     {/* Content and Image Sections */}
                                     <div className="space-y-6">

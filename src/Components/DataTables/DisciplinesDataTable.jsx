@@ -12,65 +12,47 @@ import {
     FaCheck,
     FaTimes,
     FaEye,
-    FaDownload,
-    FaEnvelope,
-    FaPhone,
-    FaBriefcase,
-    FaCalendar,
-    FaStickyNote,
-    FaUser,
-    FaFilePdf,
     FaFilter,
     FaSearch,
-    FaImage,
     FaToggleOn,
-    FaToggleOff,
-    FaStar
+    FaToggleOff
 } from 'react-icons/fa';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { XCircle } from 'lucide-react';
 
-export default function TestmonialsDataTable({ testmonialsData, loading, refetch }) {
+export default function DisciplinessDataTable({ disciplinessData, loading, refetch }) {
     const navigate = useNavigate();
     const queryClient = useQueryClient();
-    const [selectedTestmonials, setSelectedTestmonials] = useState([]);
+    const [selectedDiscipliness, setSelectedDiscipliness] = useState([]);
     const [selectAll, setSelectAll] = useState(false);
     const [isBulkActionLoading, setIsBulkActionLoading] = useState(false);
     const [filters, setFilters] = useState({
         global: '',
-        name: '',
         title: '',
         is_active: '',
+        created_by: '',
         created_from: '',
         created_to: ''
     });
     const [currentPage, setCurrentPage] = useState(1);
     const [rowsPerPage] = useState(10);
-    const [deletingTestmonialId, setDeletingTestmonialId] = useState(null);
+    const [deletingDisciplineId, setDeletingDisciplineId] = useState(null);
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-    const [testmonialToDelete, setTestmonialToDelete] = useState(null);
-    const [togglingTestmonialId, setTogglingTestmonialId] = useState(null);
+    const [disciplineToDelete, setDisciplineToDelete] = useState(null);
+    const [togglingDisciplineId, setTogglingDisciplineId] = useState(null);
 
     // Modal states
     const [showDetailsModal, setShowDetailsModal] = useState(false);
-    const [selectedTestmonial, setSelectedTestmonial] = useState(null);
+    const [selectedDiscipline, setSelectedDiscipline] = useState(null);
     const [showAddEditModal, setShowAddEditModal] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
-    const [uploadingImage, setUploadingImage] = useState(false);
 
     // Form states
     const [formData, setFormData] = useState({
-        name: '',
         title: '',
-        message: '',
-        image: null,
-        imagePreview: '',
-        removeImage: false // New state to track image removal
+        is_active: true
     });
-
-    // File input ref
-    const fileInputRef = useRef(null);
 
     // Fetch current user for permissions
     const { data: currentUser } = useQuery({
@@ -85,13 +67,13 @@ export default function TestmonialsDataTable({ testmonialsData, loading, refetch
         }
     });
 
-    // Fetch individual testimonial details
-    const { data: testmonialDetails, isLoading: isTestmonialLoading, refetch: refetchTestmonial } = useQuery({
-        queryKey: ['testmonial', selectedTestmonial],
+    // Fetch individual discipline details
+    const { data: disciplineDetails, isLoading: isDisciplineLoading, refetch: refetchDiscipline } = useQuery({
+        queryKey: ['discipline', selectedDiscipline],
         queryFn: () => {
-            if (!selectedTestmonial) return Promise.resolve(null);
+            if (!selectedDiscipline) return Promise.resolve(null);
             return axios.get(
-                `https://nexus-consults.com/api/public/api/admin/feedbacks/${selectedTestmonial}`,
+                `https://nexus-consults.com/api/public/api/admin/disciplines/${selectedDiscipline}`,
                 {
                     headers: {
                         Authorization: `Bearer ${localStorage.getItem('userToken')}`
@@ -99,7 +81,7 @@ export default function TestmonialsDataTable({ testmonialsData, loading, refetch
                 }
             ).then(res => res.data.data);
         },
-        enabled: !!selectedTestmonial,
+        enabled: !!selectedDiscipline,
     });
 
     const handleFilterChange = (field, value) => {
@@ -110,27 +92,27 @@ export default function TestmonialsDataTable({ testmonialsData, loading, refetch
         setCurrentPage(1);
     };
 
-    const handleDeleteClick = (testmonialId) => {
-        setTestmonialToDelete(testmonialId);
+    const handleDeleteClick = (disciplineId) => {
+        setDisciplineToDelete(disciplineId);
         setShowDeleteConfirm(true);
     };
 
     const handleConfirmDelete = async () => {
-        if (!testmonialToDelete) return;
+        if (!disciplineToDelete) return;
 
-        setDeletingTestmonialId(testmonialToDelete);
+        setDeletingDisciplineId(disciplineToDelete);
         setShowDeleteConfirm(false);
 
         try {
             await axios.delete(
-                `https://nexus-consults.com/api/public/api/admin/feedbacks/${testmonialToDelete}`,
+                `https://nexus-consults.com/api/public/api/admin/disciplines/${disciplineToDelete}`,
                 {
                     headers: {
                         Authorization: `Bearer ${localStorage.getItem('userToken')}`
                     }
                 }
             );
-            toast.success('Testimonial deleted successfully', { duration: 2000 });
+            toast.success('Discipline deleted successfully', { duration: 2000 });
             refetch();
         } catch (error) {
             toast.error(error.response?.data?.message || 'An unexpected error occurred', { duration: 3000 });
@@ -143,126 +125,67 @@ export default function TestmonialsDataTable({ testmonialsData, loading, refetch
                 navigate('/home')
             }
         } finally {
-            setDeletingTestmonialId(null);
-            setTestmonialToDelete(null);
+            setDeletingDisciplineId(null);
+            setDisciplineToDelete(null);
         }
     };
 
-    const handleViewDetails = (testmonial) => {
-        setSelectedTestmonial(testmonial);
+    const handleViewDetails = (discipline) => {
+        setSelectedDiscipline(discipline);
         setShowDetailsModal(true);
     };
 
     const handleAddNew = () => {
         setIsEditing(false);
         setFormData({
-            name: '',
             title: '',
-            message: '',
-            image: null,
-            imagePreview: '',
-            removeImage: false
+            is_active: true
         });
         setShowAddEditModal(true);
     };
 
-    const handleEdit = (testmonial) => {
-        setSelectedTestmonial(testmonial.id);
+    const handleEdit = (discipline) => {
+        setSelectedDiscipline(discipline.id);
         setIsEditing(true);
         // Set initial form data immediately from the row data
         setFormData({
-            name: testmonial.name || '',
-            title: testmonial.title || '',
-            message: testmonial.message || '',
-            image: null,
-            imagePreview: testmonial.image || '',
-            removeImage: false
+            title: discipline.title || '',
+            is_active: discipline.is_active || false
         });
         setShowAddEditModal(true);
     };
 
-    // Set form data when editing and testmonial details are loaded (for additional data if needed)
+    // Set form data when editing and discipline details are loaded
     useEffect(() => {
-        if (isEditing && testmonialDetails) {
+        if (isEditing && disciplineDetails) {
             setFormData(prev => ({
                 ...prev,
-                name: testmonialDetails.name || prev.name,
-                title: testmonialDetails.title || prev.title,
-                message: testmonialDetails.message || prev.message,
-                imagePreview: testmonialDetails.image || prev.imagePreview,
-                removeImage: false
+                title: disciplineDetails.title || prev.title,
+                is_active: disciplineDetails.is_active || prev.is_active
             }));
         }
-    }, [isEditing, testmonialDetails]);
+    }, [isEditing, disciplineDetails]);
 
-    const handleImageChange = (e) => {
-        const file = e.target.files[0];
-        if (file) {
-            // Validate file type
-            if (!file.type.startsWith('image/')) {
-                toast.error('Please select an image file');
-                return;
-            }
-
-            // Validate file size (5MB)
-            if (file.size > 5 * 1024 * 1024) {
-                toast.error('Image size should be less than 5MB');
-                return;
-            }
-
-            setFormData(prev => ({
-                ...prev,
-                image: file,
-                imagePreview: URL.createObjectURL(file),
-                removeImage: false // Reset removeImage when new image is selected
-            }));
-        }
-    };
-
-    const handleRemoveImage = () => {
-        setFormData(prev => ({
-            ...prev,
-            image: null,
-            imagePreview: '',
-            removeImage: true // Set flag to indicate image should be removed
-        }));
-        if (fileInputRef.current) {
-            fileInputRef.current.value = '';
-        }
-    };
-
-    const createTestmonialMutation = useMutation({
+    const createDisciplineMutation = useMutation({
         mutationFn: (formData) => {
-            const data = new FormData();
-            data.append('name', formData.name);
-            data.append('title', formData.title);
-            data.append('message', formData.message);
-            if (formData.image) {
-                data.append('image', formData.image);
-            }
-            // For new testimonials, if no image is provided, set default
-            if (!formData.image) {
-                data.append('image', '');
-            }
-
             return axios.post(
-                'https://nexus-consults.com/api/public/api/admin/feedbacks',
-                data,
+                'https://nexus-consults.com/api/public/api/admin/disciplines',
+                formData,
                 {
                     headers: {
                         Authorization: `Bearer ${localStorage.getItem('userToken')}`,
-                        'Content-Type': 'multipart/form-data'
+                        'Content-Type': 'application/json'
                     }
                 }
             );
         },
         onSuccess: () => {
-            toast.success('Testimonial created successfully');
+            toast.success('Discipline created successfully');
             setShowAddEditModal(false);
             refetch();
         },
         onError: (error) => {
-            toast.error(error.response?.data?.message || 'Failed to create testimonial');
+            toast.error(error.response?.data?.message || 'Failed to create discipline');
             if (error.response?.status == 401) {
                 localStorage.removeItem('userToken')
                 navigate('/login')
@@ -273,45 +196,27 @@ export default function TestmonialsDataTable({ testmonialsData, loading, refetch
         }
     });
 
-    const updateTestmonialMutation = useMutation({
-        mutationFn: ({ testmonialId, formData }) => {
-            const data = new FormData();
-            data.append('name', formData.name);
-            data.append('title', formData.title);
-            data.append('message', formData.message);
-
-            // Handle image based on removeImage flag
-            if (formData.removeImage) {
-                // Send '' as string when image is removed
-                data.append('image', '');
-            } else if (formData.image) {
-                // Send new image file if selected
-                data.append('image', formData.image);
-            }
-            // If neither removeImage is true nor new image is selected, 
-            // the existing image will be preserved (no image field sent)
-
-            data.append('_method', 'PUT');
-
-            return axios.post(
-                `https://nexus-consults.com/api/public/api/admin/feedbacks/${testmonialId}`,
-                data,
+    const updateDisciplineMutation = useMutation({
+        mutationFn: ({ disciplineId, formData }) => {
+            return axios.put(
+                `https://nexus-consults.com/api/public/api/admin/disciplines/${disciplineId}`,
+                formData,
                 {
                     headers: {
                         Authorization: `Bearer ${localStorage.getItem('userToken')}`,
-                        'Content-Type': 'multipart/form-data'
+                        'Content-Type': 'application/json'
                     }
                 }
             );
         },
         onSuccess: () => {
-            toast.success('Testimonial updated successfully');
+            toast.success('Discipline updated successfully');
             setShowAddEditModal(false);
             refetch();
-            refetchTestmonial();
+            refetchDiscipline();
         },
         onError: (error) => {
-            toast.error(error.response?.data?.message || 'Failed to update testimonial');
+            toast.error(error.response?.data?.message || 'Failed to update discipline');
             if (error.response?.status == 401) {
                 localStorage.removeItem('userToken')
                 navigate('/login')
@@ -323,9 +228,9 @@ export default function TestmonialsDataTable({ testmonialsData, loading, refetch
     });
 
     const toggleStatusMutation = useMutation({
-        mutationFn: (testmonialId) =>
+        mutationFn: (disciplineId) =>
             axios.patch(
-                `https://nexus-consults.com/api/public/api/admin/feedbacks/${testmonialId}/toggle-active`,
+                `https://nexus-consults.com/api/public/api/admin/disciplines/${disciplineId}/toggle-active`,
                 {},
                 {
                     headers: {
@@ -333,8 +238,8 @@ export default function TestmonialsDataTable({ testmonialsData, loading, refetch
                     }
                 }
             ),
-        onMutate: (testmonialId) => {
-            setTogglingTestmonialId(testmonialId);
+        onMutate: (disciplineId) => {
+            setTogglingDisciplineId(disciplineId);
         },
         onSuccess: () => {
             toast.success('Status updated successfully');
@@ -351,53 +256,52 @@ export default function TestmonialsDataTable({ testmonialsData, loading, refetch
             }
         },
         onSettled: () => {
-            setTogglingTestmonialId(null);
+            setTogglingDisciplineId(null);
         }
     });
 
-    const handleToggleStatus = (testmonialId, currentStatus) => {
-        toggleStatusMutation.mutate(testmonialId);
+    const handleToggleStatus = (disciplineId, currentStatus) => {
+        toggleStatusMutation.mutate(disciplineId);
     };
 
     const handleFormSubmit = (e) => {
         e.preventDefault();
-
-        if (!formData.name || !formData.title || !formData.message) {
+        // formData.append('Is_active', true);
+        if (!formData.title) {
             toast.error('Please fill in all required fields');
             return;
         }
 
         if (isEditing) {
-            updateTestmonialMutation.mutate({
-                testmonialId: selectedTestmonial,
+            updateDisciplineMutation.mutate({
+                disciplineId: selectedDiscipline,
                 formData
             });
         } else {
-            createTestmonialMutation.mutate(formData);
+            createDisciplineMutation.mutate(formData);
         }
     };
 
-    // Filter testimonials based on all filter criteria
-    const filteredTestmonials = testmonialsData?.filter(testmonial => {
+    // Filter disciplines based on all filter criteria
+    const filteredDiscipliness = disciplinessData?.filter(discipline => {
         const matchesGlobal =
             filters.global === '' ||
-            testmonial.name?.toLowerCase().includes(filters.global.toLowerCase()) ||
-            testmonial.title?.toLowerCase().includes(filters.global.toLowerCase()) ||
-            testmonial.message?.toLowerCase().includes(filters.global.toLowerCase());
-
-        const matchesName = filters.name === '' ||
-            testmonial.name?.toLowerCase().includes(filters.name.toLowerCase());
+            discipline.title?.toLowerCase().includes(filters.global.toLowerCase()) ||
+            discipline.created_by?.toLowerCase().includes(filters.global.toLowerCase());
 
         const matchesTitle = filters.title === '' ||
-            testmonial.title?.toLowerCase().includes(filters.title.toLowerCase());
+            discipline.title?.toLowerCase().includes(filters.title.toLowerCase());
+
+        const matchesCreatedBy = filters.created_by === '' ||
+            discipline.created_by?.toLowerCase().includes(filters.created_by.toLowerCase());
 
         const matchesStatus = filters.is_active === '' ||
-            testmonial.is_active?.toString() === filters.is_active;
+            discipline.is_active?.toString() === filters.is_active;
 
         // Date range filter on created_at
         let matchesDate = true;
-        if (testmonial.created_at) {
-            const createdDate = new Date(testmonial.created_at);
+        if (discipline.created_at) {
+            const createdDate = new Date(discipline.created_at);
             if (filters.created_from) {
                 const start = new Date(`${filters.created_from}T00:00:00`);
                 if (createdDate < start) matchesDate = false;
@@ -408,12 +312,12 @@ export default function TestmonialsDataTable({ testmonialsData, loading, refetch
             }
         }
 
-        return matchesGlobal && matchesName && matchesTitle && matchesStatus && matchesDate;
+        return matchesGlobal && matchesTitle && matchesCreatedBy && matchesStatus && matchesDate;
     }) || [];
 
     // Pagination logic
-    const totalPages = Math.ceil(filteredTestmonials.length / rowsPerPage);
-    const paginatedTestmonials = filteredTestmonials.slice(
+    const totalPages = Math.ceil(filteredDiscipliness.length / rowsPerPage);
+    const paginatedDiscipliness = filteredDiscipliness.slice(
         (currentPage - 1) * rowsPerPage,
         currentPage * rowsPerPage
     );
@@ -435,7 +339,7 @@ export default function TestmonialsDataTable({ testmonialsData, loading, refetch
         return (
             <div className="flex justify-between items-center mt-4 px-4 pb-1">
                 <div className='text-xs'>
-                    Showing {((currentPage - 1) * rowsPerPage + 1)}-{Math.min(currentPage * rowsPerPage, filteredTestmonials.length)} of {filteredTestmonials.length} entries
+                    Showing {((currentPage - 1) * rowsPerPage + 1)}-{Math.min(currentPage * rowsPerPage, filteredDiscipliness.length)} of {filteredDiscipliness.length} entries
                 </div>
                 <div className="flex gap-1">
                     <button
@@ -460,47 +364,47 @@ export default function TestmonialsDataTable({ testmonialsData, loading, refetch
         );
     };
 
-    // Handle individual testimonial selection
-    const handleSelectTestmonial = (testmonialId, isSelected) => {
+    // Handle individual discipline selection
+    const handleSelectDiscipline = (disciplineId, isSelected) => {
         if (isSelected) {
-            setSelectedTestmonials(prev => [...prev, testmonialId]);
+            setSelectedDiscipliness(prev => [...prev, disciplineId]);
         } else {
-            setSelectedTestmonials(prev => prev.filter(id => id !== testmonialId));
+            setSelectedDiscipliness(prev => prev.filter(id => id !== disciplineId));
         }
     };
 
     // Handle select all
     const handleSelectAll = (isSelected) => {
         if (isSelected) {
-            setSelectedTestmonials(filteredTestmonials.map(testmonial => testmonial.id));
+            setSelectedDiscipliness(filteredDiscipliness.map(discipline => discipline.id));
             setSelectAll(true);
         } else {
-            setSelectedTestmonials([]);
+            setSelectedDiscipliness([]);
             setSelectAll(false);
         }
     };
 
-    // Bulk delete testimonials
+    // Bulk delete disciplines
     const handleBulkDelete = async () => {
-        if (!selectedTestmonials.length) return;
+        if (!selectedDiscipliness.length) return;
 
         try {
             setIsBulkActionLoading(true);
-            await axios.post('https://nexus-consults.com/api/public/api/admin/feedbacks/bulk/delete',
-                { ids: selectedTestmonials },
+            await axios.post('https://nexus-consults.com/api/public/api/admin/disciplines/bulk/delete',
+                { ids: selectedDiscipliness },
                 {
                     headers: {
                         Authorization: `Bearer ${localStorage.getItem('userToken')}`
                     }
                 }
             );
-            toast.success(`${selectedTestmonials.length} testimonial(s) deleted successfully`);
-            setSelectedTestmonials([]);
+            toast.success(`${selectedDiscipliness.length} discipline(s) deleted successfully`);
+            setSelectedDiscipliness([]);
             setSelectAll(false);
             refetch();
         } catch (error) {
-            console.error('Error deleting testimonials:', error);
-            toast.error(error.response?.data?.message || 'Failed to delete testimonials');
+            console.error('Error deleting disciplines:', error);
+            toast.error(error.response?.data?.message || 'Failed to delete disciplines');
         } finally {
             setIsBulkActionLoading(false);
         }
@@ -516,17 +420,17 @@ export default function TestmonialsDataTable({ testmonialsData, loading, refetch
                         type="text"
                         value={filters.global}
                         onChange={(e) => handleFilterChange('global', e.target.value)}
-                        placeholder="Search testimonials..."
+                        placeholder="Search disciplines..."
                         className="pl-10 pr-4 py-2 rounded-xl shadow-sm focus:outline-2 focus:outline-primary w-full border border-primary transition-all"
                     />
                 </div>
-                {currentUser?.data?.data?.admin?.permissions?.includes('create_feedbacks') && (
+                {currentUser?.data?.data?.admin?.permissions?.includes('create_disciplines') && (
                     <button
                         onClick={handleAddNew}
                         className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-xl hover:bg-darkBlue transition-all"
                     >
                         <FaPlus size={16} />
-                        Add Testimonial
+                        Add Discipline
                     </button>
                 )}
             </div>
@@ -540,24 +444,12 @@ export default function TestmonialsDataTable({ testmonialsData, loading, refetch
                                 <div className="flex items-center">
                                     <input
                                         type="checkbox"
-                                        checked={selectAll && filteredTestmonials.length > 0}
+                                        checked={selectAll && filteredDiscipliness.length > 0}
                                         onChange={(e) => handleSelectAll(e.target.checked)}
                                         className="h-4 w-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
                                     />
-                                    <span className="ml-2">Name</span>
+                                    <span className="ml-2">Title</span>
                                 </div>
-                            </th>
-                            <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                <input
-                                    type="text"
-                                    value={filters.title}
-                                    onChange={(e) => handleFilterChange('title', e.target.value)}
-                                    placeholder="Title"
-                                    className="text-xs p-1 border rounded w-full"
-                                />
-                            </th>
-                            <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Message
                             </th>
                             <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                 <select
@@ -571,6 +463,15 @@ export default function TestmonialsDataTable({ testmonialsData, loading, refetch
                                 </select>
                             </th>
                             <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                <input
+                                    type="text"
+                                    value={filters.created_by}
+                                    onChange={(e) => handleFilterChange('created_by', e.target.value)}
+                                    placeholder="Created By"
+                                    className="text-xs p-1 border rounded w-full"
+                                />
+                            </th>
+                            <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                 Created Date
                             </th>
                             <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -581,105 +482,93 @@ export default function TestmonialsDataTable({ testmonialsData, loading, refetch
                     <tbody className="bg-white divide-y divide-gray-200 text-sm">
                         {loading ? (
                             <tr>
-                                <td colSpan="6" className="px-3 py-4 text-center">
+                                <td colSpan="5" className="px-3 py-4 text-center">
                                     <div className="flex justify-center items-center gap-2">
                                         <FaSpinner className="animate-spin" size={18} />
-                                        Loading testimonials...
+                                        Loading disciplines...
                                     </div>
                                 </td>
                             </tr>
-                        ) : paginatedTestmonials.length === 0 ? (
+                        ) : paginatedDiscipliness.length === 0 ? (
                             <tr>
-                                <td colSpan="6" className="px-3 py-4 text-center">
-                                    No testimonials found
+                                <td colSpan="5" className="px-3 py-4 text-center">
+                                    No disciplines found
                                 </td>
                             </tr>
                         ) : (
-                            paginatedTestmonials.map((testmonial) => (
-                                <tr key={testmonial.id} className="hover:bg-gray-50">
+                            paginatedDiscipliness.map((discipline) => (
+                                <tr key={discipline.id} className="hover:bg-gray-50">
                                     <td className="px-6 py-4 whitespace-nowrap">
                                         <div className="flex items-center">
                                             <input
                                                 type="checkbox"
-                                                checked={selectedTestmonials.includes(testmonial.id)}
-                                                onChange={(e) => handleSelectTestmonial(testmonial.id, e.target.checked)}
+                                                checked={selectedDiscipliness.includes(discipline.id)}
+                                                onChange={(e) => handleSelectDiscipline(discipline.id, e.target.checked)}
                                                 className="h-4 w-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
                                             />
-                                            <div className="ml-2 flex items-center gap-3">
-                                                <img
-                                                    src={testmonial.image}
-                                                    alt={testmonial.name}
-                                                    className="h-10 w-10 rounded-full object-cover"
-                                                />
-                                                <div>
-                                                    <div className="text-sm font-medium text-gray-900">
-                                                        {testmonial.name}
-                                                    </div>
+                                            <div className="ml-2">
+                                                <div className="text-sm font-medium text-gray-900">
+                                                    {discipline.title}
                                                 </div>
                                             </div>
                                         </div>
                                     </td>
                                     <td className="px-3 py-4 whitespace-nowrap">
-                                        <div className="text-sm text-gray-900">
-                                            {testmonial.title}
-                                        </div>
-                                    </td>
-                                    <td className="px-3 py-4">
-                                        <div className="text-sm text-gray-900 line-clamp-2 max-w-xs">
-                                            {testmonial.message}
-                                        </div>
-                                    </td>
-                                    <td className="px-3 py-4 whitespace-nowrap">
-                                        {statusBadge(testmonial.is_active)}
+                                        {statusBadge(discipline.is_active)}
                                     </td>
                                     <td className="px-3 py-4 whitespace-nowrap">
                                         <div className="text-sm text-gray-900">
-                                            {testmonial.created_at ? new Date(testmonial.created_at).toLocaleDateString() : '-'}
+                                            {discipline.created_by || '-'}
+                                        </div>
+                                    </td>
+                                    <td className="px-3 py-4 whitespace-nowrap">
+                                        <div className="text-sm text-gray-900">
+                                            {discipline.created_at ? new Date(discipline.created_at).toLocaleDateString() : '-'}
                                         </div>
                                     </td>
                                     <td className="px-3 py-4 whitespace-nowrap">
                                         <div className="flex items-center gap-2">
                                             <button
                                                 className="text-blue-500 hover:text-blue-700 p-1"
-                                                onClick={() => handleViewDetails(testmonial)}
+                                                onClick={() => handleViewDetails(discipline)}
                                                 title="View Details"
                                             >
                                                 <FaEye size={16} />
                                             </button>
 
-                                            {currentUser?.data?.data?.admin?.permissions?.includes('edit_feedbacks') && (
+                                            {currentUser?.data?.data?.admin?.permissions?.includes('edit_disciplines') && (
                                                 <>
                                                     <button
                                                         className="text-purple-500 hover:text-purple-700 p-1"
-                                                        onClick={() => handleEdit(testmonial)}
+                                                        onClick={() => handleEdit(discipline)}
                                                         title="Edit"
                                                     >
                                                         <FaEdit size={16} />
                                                     </button>
 
                                                     <button
-                                                        className={`${!testmonial.is_active ? 'text-red-500 hover:text-red-700' : 'text-green-500 hover:text-green-700'} p-1`}
-                                                        onClick={() => handleToggleStatus(testmonial.id, testmonial.is_active)}
-                                                        disabled={togglingTestmonialId === testmonial.id}
-                                                        title={testmonial.is_active ? "Deactivate" : "Activate"}
+                                                        className={`${!discipline.is_active ? 'text-red-500 hover:text-red-700' : 'text-green-500 hover:text-green-700'} p-1`}
+                                                        onClick={() => handleToggleStatus(discipline.id, discipline.is_active)}
+                                                        disabled={togglingDisciplineId === discipline.id}
+                                                        title={discipline.is_active ? "Deactivate" : "Activate"}
                                                     >
-                                                        {togglingTestmonialId === testmonial.id ? (
+                                                        {togglingDisciplineId === discipline.id ? (
                                                             <FaSpinner className="animate-spin" size={16} />
                                                         ) : (
-                                                            !testmonial.is_active ? <FaTimes /> : <FaCheck />
+                                                            !discipline.is_active ? <FaTimes /> : <FaCheck />
                                                         )}
                                                     </button>
                                                 </>
                                             )}
 
-                                            {currentUser?.data?.data?.admin?.permissions?.includes('delete_feedbacks') && (
+                                            {currentUser?.data?.data?.admin?.permissions?.includes('delete_disciplines') && (
                                                 <button
                                                     className="text-red-500 hover:text-red-700 p-1"
-                                                    onClick={() => handleDeleteClick(testmonial.id)}
-                                                    disabled={deletingTestmonialId === testmonial.id}
+                                                    onClick={() => handleDeleteClick(discipline.id)}
+                                                    disabled={deletingDisciplineId === discipline.id}
                                                     title="Delete"
                                                 >
-                                                    {deletingTestmonialId === testmonial.id ? (
+                                                    {deletingDisciplineId === discipline.id ? (
                                                         <FaSpinner className="animate-spin" size={16} />
                                                     ) : (
                                                         <FaTrashAlt size={16} />
@@ -696,11 +585,11 @@ export default function TestmonialsDataTable({ testmonialsData, loading, refetch
             </div>
 
             {/* Bulk Actions Toolbar */}
-            {selectedTestmonials.length > 0 && (
+            {selectedDiscipliness.length > 0 && (
                 <div className="bg-blue-50 p-4 rounded-md mb-6 border border-blue-200">
                     <div className="flex flex-wrap items-center gap-4">
                         <div className="text-blue-800 font-medium">
-                            {selectedTestmonials.length} testimonial(s) selected
+                            {selectedDiscipliness.length} discipline(s) selected
                         </div>
                         <div className="flex flex-wrap gap-2">
                             <button
@@ -713,7 +602,7 @@ export default function TestmonialsDataTable({ testmonialsData, loading, refetch
                             </button>
                             <button
                                 onClick={() => {
-                                    setSelectedTestmonials([]);
+                                    setSelectedDiscipliness([]);
                                     setSelectAll(false);
                                 }}
                                 className="flex items-center px-3 py-1.5 bg-gray-200 text-gray-700 rounded hover:bg-gray-300 text-sm"
@@ -736,7 +625,7 @@ export default function TestmonialsDataTable({ testmonialsData, loading, refetch
             {/* Pagination */}
             {!loading && renderPagination()}
 
-            {/* Testimonial Details Modal */}
+            {/* Discipline Details Modal */}
             {showDetailsModal && (
                 <motion.div
                     initial={{ opacity: 0 }}
@@ -754,7 +643,7 @@ export default function TestmonialsDataTable({ testmonialsData, loading, refetch
                     >
                         <div className="p-6">
                             <div className="flex justify-between items-center mb-4">
-                                <h3 className="text-xl font-bold text-gray-900">Testimonial Details</h3>
+                                <h3 className="text-xl font-bold text-gray-900">Discipline Details</h3>
                                 <button
                                     onClick={() => setShowDetailsModal(false)}
                                     className="text-gray-500 hover:text-gray-700"
@@ -763,44 +652,39 @@ export default function TestmonialsDataTable({ testmonialsData, loading, refetch
                                 </button>
                             </div>
 
-                            {selectedTestmonial ? (
+                            {selectedDiscipline ? (
                                 <div className="space-y-6">
-                                    {/* Image */}
-                                    <div className="flex justify-center">
-                                        <img
-                                            src={selectedTestmonial.image}
-                                            alt={selectedTestmonial.name}
-                                            className="h-32 w-32 rounded-full object-cover border-4 border-gray-200"
-                                        />
-                                    </div>
-
                                     {/* Information */}
                                     <div className="grid grid-cols-1 gap-4">
                                         <div>
-                                            <label className="block text-sm font-medium text-gray-700">Name</label>
-                                            <p className="mt-1 text-lg font-semibold text-gray-900">{selectedTestmonial.name}</p>
-                                        </div>
-                                        <div>
                                             <label className="block text-sm font-medium text-gray-700">Title</label>
-                                            <p className="mt-1 text-md text-gray-900">{selectedTestmonial.title}</p>
-                                        </div>
-                                        <div>
-                                            <label className="block text-sm font-medium text-gray-700">Message</label>
-                                            <p className="mt-1 text-sm text-gray-900 whitespace-pre-wrap bg-gray-50 p-4 rounded-lg">
-                                                {selectedTestmonial.message}
-                                            </p>
+                                            <p className="mt-1 text-lg font-semibold text-gray-900">{selectedDiscipline.title}</p>
                                         </div>
                                         <div className="grid grid-cols-2 gap-4">
                                             <div>
                                                 <label className="block text-sm font-medium text-gray-700">Status</label>
                                                 <div className="mt-1">
-                                                    {statusBadge(selectedTestmonial.is_active)}
+                                                    {statusBadge(selectedDiscipline.is_active)}
                                                 </div>
                                             </div>
                                             <div>
+                                                <label className="block text-sm font-medium text-gray-700">Created By</label>
+                                                <p className="mt-1 text-sm text-gray-900">
+                                                    {selectedDiscipline.created_by || '-'}
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div>
                                                 <label className="block text-sm font-medium text-gray-700">Created On</label>
                                                 <p className="mt-1 text-sm text-gray-900">
-                                                    {new Date(selectedTestmonial.created_at).toLocaleString()}
+                                                    {new Date(selectedDiscipline.created_at).toLocaleString()}
+                                                </p>
+                                            </div>
+                                            <div>
+                                                <label className="block text-sm font-medium text-gray-700">Last Updated</label>
+                                                <p className="mt-1 text-sm text-gray-900">
+                                                    {new Date(selectedDiscipline.updated_at).toLocaleString()}
                                                 </p>
                                             </div>
                                         </div>
@@ -808,7 +692,7 @@ export default function TestmonialsDataTable({ testmonialsData, loading, refetch
                                 </div>
                             ) : (
                                 <div className="text-center py-8 text-gray-500">
-                                    Failed to load testimonial details
+                                    Failed to load discipline details
                                 </div>
                             )}
                         </div>
@@ -816,7 +700,7 @@ export default function TestmonialsDataTable({ testmonialsData, loading, refetch
                 </motion.div>
             )}
 
-            {/* Add/Edit Testimonial Modal */}
+            {/* Add/Edit Discipline Modal */}
             {showAddEditModal && (
                 <motion.div
                     initial={{ opacity: 0 }}
@@ -839,7 +723,7 @@ export default function TestmonialsDataTable({ testmonialsData, loading, refetch
                         <div className="p-6">
                             <div className="flex justify-between items-center mb-4">
                                 <h3 className="text-xl font-bold text-gray-900">
-                                    {isEditing ? 'Edit Testimonial' : 'Add New Testimonial'}
+                                    {isEditing ? 'Edit Discipline' : 'Add New Discipline'}
                                 </h3>
                                 <button
                                     onClick={() => setShowAddEditModal(false)}
@@ -851,74 +735,6 @@ export default function TestmonialsDataTable({ testmonialsData, loading, refetch
 
                             <form onSubmit={handleFormSubmit}>
                                 <div className="grid grid-cols-1 gap-4 mb-4">
-                                    {/* Image Upload */}
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                                            Profile Image
-                                        </label>
-                                        <div className="flex items-center gap-4">
-                                            {formData.imagePreview ? (
-                                                <div className="relative">
-                                                    <img
-                                                        src={formData.imagePreview}
-                                                        alt="Preview"
-                                                        className="h-20 w-20 rounded-full object-cover border"
-                                                    />
-                                                    <button
-                                                        type="button"
-                                                        onClick={handleRemoveImage}
-                                                        className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
-                                                    >
-                                                        <FaTimes size={12} />
-                                                    </button>
-                                                </div>
-                                            ) : (
-                                                <div className="h-20 w-20 rounded-full border-2 border-dashed border-gray-300 flex items-center justify-center">
-                                                    <FaImage className="text-gray-400" size={24} />
-                                                </div>
-                                            )}
-                                            <div>
-                                                <input
-                                                    type="file"
-                                                    ref={fileInputRef}
-                                                    onChange={handleImageChange}
-                                                    accept="image/*"
-                                                    className="hidden"
-                                                />
-                                                <button
-                                                    type="button"
-                                                    onClick={() => fileInputRef.current?.click()}
-                                                    className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50"
-                                                >
-                                                    Choose Image
-                                                </button>
-                                                <p className="text-xs text-gray-500 mt-1">
-                                                    PNG, JPG, JPEG up to 5MB
-                                                </p>
-                                            </div>
-                                        </div>
-                                        {formData.removeImage && (
-                                            <p className="text-xs text-blue-600 mt-1">
-                                                Image will be set to default
-                                            </p>
-                                        )}
-                                    </div>
-
-                                    {/* Name */}
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                                            Name *
-                                        </label>
-                                        <input
-                                            type="text"
-                                            value={formData.name}
-                                            onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-                                            className="w-full px-3 py-2 border rounded-md focus:outline-primary"
-                                            placeholder="Enter full name"
-                                            required
-                                        />
-                                    </div>
-
                                     {/* Title */}
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -929,25 +745,33 @@ export default function TestmonialsDataTable({ testmonialsData, loading, refetch
                                             value={formData.title}
                                             onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
                                             className="w-full px-3 py-2 border rounded-md focus:outline-primary"
-                                            placeholder="e.g., CEO at Company"
+                                            placeholder="Enter discipline title"
                                             required
                                         />
                                     </div>
 
-                                    {/* Message */}
+                                    {/* Status Toggle */}
+                                    {/* 
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700 mb-1">
-                                            Message *
+                                            Status
                                         </label>
-                                        <textarea
-                                            value={formData.message}
-                                            onChange={(e) => setFormData(prev => ({ ...prev, message: e.target.value }))}
-                                            rows={6}
-                                            className="w-full px-3 py-2 border rounded-md focus:outline-primary resize-vertical"
-                                            placeholder="Enter testimonial message"
-                                            required
-                                        />
-                                    </div>
+                                        <div className="flex items-center gap-2">
+                                            <button
+                                                type="button"
+                                                onClick={() => setFormData(prev => ({ ...prev, is_active: !prev.is_active }))}
+                                                className={`relative inline-flex h-6 w-11 items-center rounded-full ${formData.is_active ? 'bg-green-500' : 'bg-gray-300'}`}
+                                            >
+                                                <span
+                                                    className={`inline-block h-4 w-4 transform rounded-full bg-white transition ${formData.is_active ? 'translate-x-6' : 'translate-x-1'}`}
+                                                />
+                                            </button>
+                                            <span className="text-sm text-gray-700">
+                                                {formData.is_active ? 'Active' : 'Inactive'}
+                                            </span>
+                                        </div>
+                                    </div> */}
+
                                 </div>
 
                                 <div className="flex justify-end gap-3">
@@ -960,16 +784,16 @@ export default function TestmonialsDataTable({ testmonialsData, loading, refetch
                                     </button>
                                     <button
                                         type="submit"
-                                        disabled={createTestmonialMutation.isPending || updateTestmonialMutation.isPending}
+                                        disabled={createDisciplineMutation.isPending || updateDisciplineMutation.isPending}
                                         className="px-4 py-2 bg-primary text-white rounded-md hover:bg-darkBlue transition-all flex items-center gap-2 disabled:opacity-50"
                                     >
-                                        {(createTestmonialMutation.isPending || updateTestmonialMutation.isPending) ? (
+                                        {(createDisciplineMutation.isPending || updateDisciplineMutation.isPending) ? (
                                             <>
                                                 <FaSpinner className="animate-spin" />
                                                 {isEditing ? 'Updating...' : 'Creating...'}
                                             </>
                                         ) : (
-                                            isEditing ? 'Update Testimonial' : 'Create Testimonial'
+                                            isEditing ? 'Update Discipline' : 'Create Discipline'
                                         )}
                                     </button>
                                 </div>
@@ -1001,10 +825,10 @@ export default function TestmonialsDataTable({ testmonialsData, loading, refetch
                                     <FaTrashAlt className="h-5 w-5 text-red-600" />
                                 </div>
                                 <div className="ml-4">
-                                    <h3 className="text-lg font-medium text-gray-900">Delete Testimonial</h3>
+                                    <h3 className="text-lg font-medium text-gray-900">Delete Discipline</h3>
                                     <div className="mt-2">
                                         <p className="text-sm text-gray-500">
-                                            Are you sure you want to delete this testimonial? This action cannot be undone.
+                                            Are you sure you want to delete this discipline? This action cannot be undone.
                                         </p>
                                     </div>
                                 </div>

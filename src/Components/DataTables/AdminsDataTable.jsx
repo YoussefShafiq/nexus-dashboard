@@ -73,7 +73,7 @@ export default function AdminsDataTable({ admins, allPermissions, loading, refet
         try {
             const newStatus = currentStatus === 'active' ? 'inactive' : 'active';
             await axios.patch(
-                `https://nexus-consults.com/api/public/api/admin/${adminId}/toggle-status`,
+                `https://nexus-consults.com/api/public/api/admin/users/${adminId}/toggle-active`,
                 { status: newStatus },
                 {
                     headers: {

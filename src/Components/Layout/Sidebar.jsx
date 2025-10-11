@@ -112,6 +112,12 @@ export default function Sidebar() {
             icon: <IoLinkOutline />,
             permission: "view_feedbacks"
         },
+        {
+            title: 'Disciplines',
+            path: '/disciplines',
+            icon: <IoLinkOutline />,
+            permission: "view_disciplines"
+        },
 
     ]
     return <>
