@@ -7,17 +7,15 @@ import { SidebarContext } from '../../Contexts/SidebarContext'
 import { GoSidebarExpand } from 'react-icons/go'
 import { CiLogout } from 'react-icons/ci'
 import { useQuery } from '@tanstack/react-query'
-import {
-    IoHomeOutline,
-    IoLinkOutline,
-    IoPeopleOutline,
-    IoCardOutline,
-    IoDocumentTextOutline,
-    IoNewspaperOutline,
-    IoCalendarOutline,
-    IoHelpBuoyOutline,
-    IoHammerOutline
-} from 'react-icons/io5';
+import { IoConstructOutline } from 'react-icons/io5';
+import { RiAdminLine } from "react-icons/ri";
+import { BsPostcard } from "react-icons/bs";
+import { CgWorkAlt } from "react-icons/cg";
+import { GrUserWorker } from "react-icons/gr";
+import { VscFeedback } from "react-icons/vsc";
+import { ImProfile } from "react-icons/im";
+import { BiCategoryAlt } from "react-icons/bi";
+import { BsBuildings } from "react-icons/bs";
 
 export default function Sidebar() {
     const { sidebarOpen, setSidebarOpen } = useContext(SidebarContext)
@@ -67,55 +65,55 @@ export default function Sidebar() {
         {
             title: 'Admins',
             path: '/admins',
-            icon: <IoLinkOutline />,
+            icon: <RiAdminLine />,
             permission: "view_admins"
         },
         {
             title: 'Services',
             path: '/services',
-            icon: <IoLinkOutline />,
+            icon: <IoConstructOutline />,
             permission: "view_services"
         },
         {
             title: 'Projects',
             path: '/projects',
-            icon: <IoLinkOutline />,
+            icon: <BsBuildings />,
             permission: "view_projects"
         },
         {
             title: 'Blogs',
             path: '/blogs',
-            icon: <IoLinkOutline />,
+            icon: <BsPostcard />,
             permission: "view_blogs"
         },
         {
             title: 'Jobs',
             path: '/jobs',
-            icon: <IoLinkOutline />,
+            icon: <CgWorkAlt />,
             permission: "view_jobs"
         },
         {
             title: 'Jobs Applications',
             path: '/jobs-applications',
-            icon: <IoLinkOutline />,
+            icon: <GrUserWorker />,
             permission: "view_job_applications"
         },
         {
             title: 'Testmonials',
             path: '/testmonials',
-            icon: <IoLinkOutline />,
+            icon: <VscFeedback />,
             permission: "view_feedbacks"
         },
         {
             title: 'About Us',
             path: '/about-us',
-            icon: <IoLinkOutline />,
+            icon: <ImProfile />,
             permission: "view_feedbacks"
         },
         {
             title: 'Disciplines',
             path: '/disciplines',
-            icon: <IoLinkOutline />,
+            icon: <BiCategoryAlt />,
             permission: "view_disciplines"
         },
 
