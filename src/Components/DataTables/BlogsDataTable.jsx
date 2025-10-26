@@ -921,20 +921,6 @@ export default function BlogsDataTable({ blogs, loading, refetch }) {
         );
     };
 
-    const emailsCountBadge = (count) => {
-        const emailCount = count || 0;
-        const colorClass = emailCount > 0
-            ? 'bg-green-100 text-green-800 border-green-200'
-            : 'bg-gray-100 text-gray-600 border-gray-200';
-
-        return (
-            <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium border ${colorClass}`}>
-                <FaEnvelope size={10} />
-                {emailCount}
-            </span>
-        );
-    };
-
     const renderPagination = () => {
         if (totalPages <= 1) return null;
 
@@ -1230,9 +1216,6 @@ export default function BlogsDataTable({ blogs, loading, refetch }) {
                                 />
                             </th>
                             <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Emails Sent
-                            </th>
-                            <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                 Actions
                             </th>
                         </tr>
@@ -1289,9 +1272,6 @@ export default function BlogsDataTable({ blogs, loading, refetch }) {
                                     </td>
                                     <td className="px-3 py-4 whitespace-nowrap">
                                         {blog.created_at ? new Date(blog.created_at).toLocaleDateString() : '-'}
-                                    </td>
-                                    <td className="px-3 py-4 whitespace-nowrap">
-                                        {emailsCountBadge(blog.emails_sent_count)}
                                     </td>
                                     <td className="px-3 py-4 whitespace-nowrap">
                                         <div className="flex items-center gap-2">
