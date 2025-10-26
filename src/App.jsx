@@ -19,13 +19,14 @@ import Testmonials from './Components/Pages/Testmonials'
 import AboutUs from './Components/Pages/AboutUs'
 import UserSetting from './Components/Pages/UserSetting'
 import Disciplines from './Components/Pages/Disciplines'
+import ErrorPage from './Components/errorHandling/ErrorPage'
 
 function App() {
 
   const router = createBrowserRouter([
     { path: '/login', element: <Login /> },
     {
-      path: '/', element: <ProtectedRoute><Layout /></ProtectedRoute>, children: [
+      path: '/', element: <ProtectedRoute><Layout /></ProtectedRoute>, errorElement: <ErrorPage />, children: [
         { index: true, element: <ProtectedRoute><Home /></ProtectedRoute> },
         { path: '/services', element: <ProtectedRoute><Services /></ProtectedRoute> },
         { path: '/projects', element: <ProtectedRoute><Projects /></ProtectedRoute> },
