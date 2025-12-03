@@ -20,7 +20,8 @@ import {
     FaMinusSquare,
     FaSquare,
     FaSave,
-    FaFolderOpen
+    FaFolderOpen,
+    FaTrash
 } from 'react-icons/fa';
 import TiptapWithImg from '../TextEditor/TiptapWithImg';
 import DateRangePicker from '../ReusableComponents/DateRangePicker';
@@ -64,21 +65,15 @@ export default function ServicesDataTable({ services, disciplinesData, loading, 
     const [drafts, setDrafts] = useState([]);
     const [activeDraftId, setActiveDraftId] = useState(null);
 
-    // Form states - Updated to match API structure
+    // Form states - Updated with dynamic sections
     const [formData, setFormData] = useState({
         title: '',
         slug: '',
         description: '',
         is_active: true,
         cover_photo: null,
-        content1: '',
-        image1: null,
-        content2: '',
-        image2: null,
-        content3: '',
-        image3: null,
         disciplines: [],
-        // tags: []
+        sections: [] // Changed from fixed content1-3 to dynamic sections array
     });
 
     const [editFormData, setEditFormData] = useState({
@@ -89,17 +84,8 @@ export default function ServicesDataTable({ services, disciplinesData, loading, 
         is_active: true,
         cover_photo: null,
         existing_cover_photo: null,
-        content1: '',
-        image1: null,
-        existing_image1: null,
-        content2: '',
-        image2: null,
-        existing_image2: null,
-        content3: '',
-        image3: null,
-        existing_image3: null,
         disciplines: [],
-        // tags: []
+        sections: [] // Changed from fixed content1-3 to dynamic sections array
     });
 
     // Fetch current user for permissions
@@ -224,9 +210,8 @@ export default function ServicesDataTable({ services, disciplinesData, loading, 
         // Avoid saving empty drafts
         const hasContent = (formData.title && formData.title.trim() !== '') ||
             (formData.description && formData.description.trim() !== '') ||
-            (formData.content1 && formData.content1.trim() !== '') ||
-            (formData.content2 && formData.content2.trim() !== '') ||
-            (formData.content3 && formData.content3.trim() !== '');
+            formData.sections.some(section => section.content && section.content.trim() !== '');
+
         if (!hasContent) return null;
 
         // Reuse existing draft id by preference: activeDraftId, then existing by slug
@@ -236,20 +221,22 @@ export default function ServicesDataTable({ services, disciplinesData, loading, 
             if (existing) id = existing.id;
         }
 
+        // Process sections for draft storage
+        const sectionsForDraft = formData.sections.map(section => ({
+            content: section.content || '',
+            image_meta: section.image ? { name: section.image.name, type: section.image.type, size: section.image.size } : null,
+            existing_image: section.existing_image || null
+        }));
+
         return {
             id: id || `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
             title: formData.title,
             slug: formData.slug,
             description: formData.description,
             is_active: formData.is_active,
-            content1: formData.content1,
-            content2: formData.content2,
-            content3: formData.content3,
-            disciplines: formData.disciplines || [], // ADD THIS
+            disciplines: formData.disciplines || [],
+            sections: sectionsForDraft,
             cover_photo_meta: formData.cover_photo ? { name: formData.cover_photo.name, type: formData.cover_photo.type, size: formData.cover_photo.size } : null,
-            image1_meta: formData.image1 ? { name: formData.image1.name, type: formData.image1.type, size: formData.image1.size } : null,
-            image2_meta: formData.image2 ? { name: formData.image2.name, type: formData.image2.type, size: formData.image2.size } : null,
-            image3_meta: formData.image3 ? { name: formData.image3.name, type: formData.image3.type, size: formData.image3.size } : null,
         };
     };
 
@@ -262,19 +249,22 @@ export default function ServicesDataTable({ services, disciplinesData, loading, 
     };
 
     const resumeDraft = (draft) => {
+        // Restore sections from draft
+        const restoredSections = draft.sections?.map(section => ({
+            id: Date.now() + Math.random(),
+            content: section.content || '',
+            image: null,
+            existing_image: section.existing_image || null
+        })) || [];
+
         setFormData({
             title: draft.title || '',
             slug: draft.slug || '',
             description: draft.description || '',
             is_active: draft.is_active ?? true,
-            content1: draft.content1 || '',
-            content2: draft.content2 || '',
-            content3: draft.content3 || '',
-            disciplines: draft.disciplines || [], // ADD THIS
+            disciplines: draft.disciplines || [],
+            sections: restoredSections,
             cover_photo: null,
-            image1: null,
-            image2: null,
-            image3: null,
         });
         setIsSlugManuallyEdited(true);
         setActiveDraftId(draft.id);
@@ -293,14 +283,12 @@ export default function ServicesDataTable({ services, disciplinesData, loading, 
             addAutoSaveInterval.current = setInterval(() => {
                 const draft = makeDraftFromForm();
                 if (draft) {
-                    // Include disciplines in the content check
+                    // Include disciplines and sections in the content check
                     const currentContent = JSON.stringify({
                         title: draft.title,
                         description: draft.description,
-                        content1: draft.content1,
-                        content2: draft.content2,
-                        content3: draft.content3,
-                        disciplines: draft.disciplines
+                        disciplines: draft.disciplines,
+                        sections: draft.sections
                     });
 
                     if (currentContent !== lastAutoSaveRef.current) {
@@ -527,42 +515,118 @@ export default function ServicesDataTable({ services, disciplinesData, loading, 
         }));
     };
 
-    // const handletagsChange = (e) => {
-    //     setFormData(prev => ({
-    //         ...prev,
-    //         tags: e.value
-    //     }));
-    // };
-
-    // const handleEdittagsChange = (e) => {
-    //     setEditFormData(prev => ({
-    //         ...prev,
-    //         tags: e.value
-    //     }));
-    // };
-
-    // Handle content change for individual content fields
-    const handleContent1Change = (content) => {
-        setFormData(prev => ({ ...prev, content1: content }));
+    // Dynamic sections handlers for create form
+    const addSection = () => {
+        const newSection = {
+            id: Date.now() + Math.random(),
+            content: '',
+            image: null,
+            existing_image: null
+        };
+        setFormData(prev => ({
+            ...prev,
+            sections: [...prev.sections, newSection]
+        }));
     };
 
-    const handleContent2Change = (content) => {
-        setFormData(prev => ({ ...prev, content2: content }));
+    const removeSection = (sectionId) => {
+        setFormData(prev => ({
+            ...prev,
+            sections: prev.sections.filter(section => section.id !== sectionId)
+        }));
     };
 
-    const handleContent3Change = (content) => {
-        setFormData(prev => ({ ...prev, content3: content }));
+    const updateSectionContent = (sectionId, content) => {
+        setFormData(prev => ({
+            ...prev,
+            sections: prev.sections.map(section =>
+                section.id === sectionId ? { ...section, content } : section
+            )
+        }));
     };
 
-    const handleEditContent1Change = (content) => {
-        setEditFormData(prev => ({ ...prev, content1: content }));
+    const updateSectionImage = (sectionId, image) => {
+        setFormData(prev => ({
+            ...prev,
+            sections: prev.sections.map(section =>
+                section.id === sectionId ? { ...section, image } : section
+            )
+        }));
     };
 
-    const handleEditContent2Change = (content) => {
-        setEditFormData(prev => ({ ...prev, content2: content }));
+    const removeSectionImage = (sectionId) => {
+        setFormData(prev => ({
+            ...prev,
+            sections: prev.sections.map(section =>
+                section.id === sectionId ? { ...section, image: null } : section
+            )
+        }));
     };
-    const handleEditContent3Change = (content) => {
-        setEditFormData(prev => ({ ...prev, content3: content }));
+
+    const removeExistingSectionImage = (sectionId) => {
+        setFormData(prev => ({
+            ...prev,
+            sections: prev.sections.map(section =>
+                section.id === sectionId ? { ...section, existing_image: null, image: null } : section
+            )
+        }));
+    };
+
+    // Dynamic sections handlers for edit form
+    const addEditSection = () => {
+        const newSection = {
+            id: Date.now() + Math.random(),
+            content: '',
+            image: null,
+            existing_image: null
+        };
+        setEditFormData(prev => ({
+            ...prev,
+            sections: [...prev.sections, newSection]
+        }));
+    };
+
+    const removeEditSection = (sectionId) => {
+        setEditFormData(prev => ({
+            ...prev,
+            sections: prev.sections.filter(section => section.id !== sectionId)
+        }));
+    };
+
+    const updateEditSectionContent = (sectionId, content) => {
+        setEditFormData(prev => ({
+            ...prev,
+            sections: prev.sections.map(section =>
+                section.id === sectionId ? { ...section, content } : section
+            )
+        }));
+    };
+
+    const updateEditSectionImage = (sectionId, image) => {
+        setEditFormData(prev => ({
+            ...prev,
+            sections: prev.sections.map(section =>
+                section.id === sectionId ? { ...section, image } : section
+            )
+        }));
+    };
+
+    const removeEditSectionImage = (sectionId) => {
+        setEditFormData(prev => ({
+            ...prev,
+            sections: prev.sections.map(section =>
+                section.id === sectionId ? { ...section, image: null } : section
+            )
+        }));
+    };
+
+    const removeExistingEditSectionImage = (sectionId) => {
+        setEditFormData(prev => ({
+            ...prev,
+            sections: prev.sections.map(section =>
+                section.id === sectionId ? { ...section, existing_image: null, image: null } : section
+            )
+        }));
     };
 
     const resetForm = () => {
@@ -572,13 +636,8 @@ export default function ServicesDataTable({ services, disciplinesData, loading, 
             description: '',
             is_active: true,
             cover_photo: null,
-            content1: '',
-            image1: null,
-            content2: '',
-            image2: null,
-            content3: '',
-            image3: null,
-            disciplines: []
+            disciplines: [],
+            sections: []
         });
         setIsSlugManuallyEdited(false);
     };
@@ -592,6 +651,13 @@ export default function ServicesDataTable({ services, disciplinesData, loading, 
     useEffect(() => {
         if (serviceData && editingServiceId) {
             const sections = serviceData.sections || [];
+            const formattedSections = sections.map((section, index) => ({
+                id: Date.now() + index,
+                content: section.content || '',
+                image: null,
+                existing_image: section.image || null
+            }));
+
             setEditFormData({
                 id: serviceData.id,
                 title: serviceData.title,
@@ -600,16 +666,8 @@ export default function ServicesDataTable({ services, disciplinesData, loading, 
                 is_active: serviceData.is_active,
                 cover_photo: null,
                 existing_cover_photo: serviceData.cover_photo,
-                content1: sections[0]?.content || '',
-                image1: null,
-                existing_image1: sections[0]?.image || null,
-                content2: sections[1]?.content || '',
-                image2: null,
-                existing_image2: sections[1]?.image || null,
-                content3: sections[2]?.content || '',
-                image3: null,
-                existing_image3: sections[2]?.image || null,
-                disciplines: serviceData.disciplines?.map(d => d.id) || [] // ADD THIS
+                disciplines: serviceData.disciplines?.map(d => d.id) || [],
+                sections: formattedSections
             });
             setIsEditSlugManuallyEdited(true);
             setShowEditModal(true);
@@ -619,30 +677,37 @@ export default function ServicesDataTable({ services, disciplinesData, loading, 
     const handleAddService = async (e) => {
         e.preventDefault();
 
+        // Check if at least one section has content
+        const hasContent = formData.sections.some(section =>
+            section.content && section.content.trim() !== ''
+        );
+
+        if (!hasContent) {
+            toast.error('Please add at least one section with content');
+            return;
+        }
+
         setUpdatingService(true);
         try {
             const formDataToSend = new FormData();
             formDataToSend.append('title', formData.title);
             formDataToSend.append('slug', formData.slug);
             formDataToSend.append('is_active', formData.is_active ? 1 : 0);
-            formDataToSend.append('content1', formData.content1);
-            formDataToSend.append('content2', formData.content2);
-            formDataToSend.append('content3', formData.content3);
+            formDataToSend.append('description', formData.description);
 
             formData.disciplines.forEach(disciplineId => {
                 formDataToSend.append('disciplines[]', disciplineId);
             });
 
-            // formData.tags.forEach(tag => {
-            //     formDataToSend.append('tags[]', tag);
-            // });
+            // Append sections
+            formData.sections.forEach((section, index) => {
+                formDataToSend.append(`content${index + 1}`, section.content || '');
+                if (section.image instanceof File) {
+                    formDataToSend.append(`image${index + 1}`, section.image);
+                }
+            });
 
             formDataToSend.append('cover_photo', formData.cover_photo || '');
-            formDataToSend.append('image1', formData.image1 || '');
-            formDataToSend.append('image2', formData.image2 || '');
-            formDataToSend.append('image3', formData.image3 || '');
-
-            formDataToSend.append('description', formData.description);
 
             await axios.post(
                 'https://nexus-consults.com/api/public/api/admin/services',
@@ -679,15 +744,22 @@ export default function ServicesDataTable({ services, disciplinesData, loading, 
     const handleUpdateService = async (e) => {
         e.preventDefault();
 
+        // Check if at least one section has content
+        const hasContent = editFormData.sections.some(section =>
+            section.content && section.content.trim() !== ''
+        );
+
+        if (!hasContent) {
+            toast.error('Please add at least one section with content');
+            return;
+        }
+
         setUpdatingService(true);
         try {
             const formDataToSend = new FormData();
             formDataToSend.append('title', editFormData.title);
             formDataToSend.append('slug', editFormData.slug);
             formDataToSend.append('is_active', editFormData.is_active ? 1 : 0);
-            formDataToSend.append('content1', editFormData.content1);
-            formDataToSend.append('content2', editFormData.content2);
-            formDataToSend.append('content3', editFormData.content3);
             formDataToSend.append('description', editFormData.description);
             formDataToSend.append('_method', 'POST');
 
@@ -695,39 +767,25 @@ export default function ServicesDataTable({ services, disciplinesData, loading, 
                 formDataToSend.append('disciplines[]', disciplineId);
             });
 
-            // editFormData.tags.forEach(tag => {
-            //     formDataToSend.append('tags[]', tag);
-            // });
+            // Append sections
+            editFormData.sections.forEach((section, index) => {
+                formDataToSend.append(`content${index + 1}`, section.content || '');
 
-            // Only append images if they have been changed (new file selected)
-            // For cover_photo
+                // Handle image for this section
+                if (section.image instanceof File) {
+                    formDataToSend.append(`image${index + 1}`, section.image);
+                } else if (section.existing_image === null) {
+                    // If existing_image is null, it means the image was removed
+                    formDataToSend.append(`image${index + 1}`, '');
+                }
+                // Otherwise, don't send this image field to preserve existing image
+            });
+
+            // Handle cover photo
             if (editFormData.cover_photo instanceof File) {
                 formDataToSend.append('cover_photo', editFormData.cover_photo);
             } else if (editFormData.existing_cover_photo === null) {
-                // If existing_cover_photo is null, it means the image was removed
                 formDataToSend.append('cover_photo', '');
-            }
-            // Otherwise, don't send cover_photo field to preserve existing image
-
-            // For image1
-            if (editFormData.image1 instanceof File) {
-                formDataToSend.append('image1', editFormData.image1);
-            } else if (editFormData.existing_image1 === null) {
-                formDataToSend.append('image1', '');
-            }
-
-            // For image2
-            if (editFormData.image2 instanceof File) {
-                formDataToSend.append('image2', editFormData.image2);
-            } else if (editFormData.existing_image2 === null) {
-                formDataToSend.append('image2', '');
-            }
-
-            // For image3
-            if (editFormData.image3 instanceof File) {
-                formDataToSend.append('image3', editFormData.image3);
-            } else if (editFormData.existing_image3 === null) {
-                formDataToSend.append('image3', '');
             }
 
             await axios.post(
@@ -854,7 +912,6 @@ export default function ServicesDataTable({ services, disciplinesData, loading, 
         );
     };
 
-
     // Handle individual service selection
     const handleSelectService = (serviceId, isSelected) => {
         if (isSelected) {
@@ -939,7 +996,106 @@ export default function ServicesDataTable({ services, disciplinesData, loading, 
         }
     };
 
-    // Image upload component
+    // Image upload component for sections
+    const SectionImageUpload = React.memo(({
+        sectionId,
+        label,
+        existingImage,
+        currentImage,
+        onImageChange,
+        onRemoveImage,
+        onRemoveExistingImage
+    }) => {
+        const existingImageUrl = existingImage;
+        const [previewUrl, setPreviewUrl] = useState(null);
+        const fileInputRef = useRef(null);
+
+        // Create preview URL for current image and clean up on unmount
+        useEffect(() => {
+            if (currentImage && currentImage instanceof File) {
+                const url = URL.createObjectURL(currentImage);
+                setPreviewUrl(url);
+                return () => {
+                    URL.revokeObjectURL(url);
+                    setPreviewUrl(null);
+                };
+            } else {
+                setPreviewUrl(null);
+            }
+        }, [currentImage]);
+
+        const handleFileChange = (e) => {
+            if (e.target.files && e.target.files[0]) {
+                onImageChange(sectionId, e.target.files[0]);
+            }
+        };
+
+        return (
+            <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-1">{label}</label>
+                {previewUrl ? (
+                    <div className="relative mb-4">
+                        <img
+                            src={previewUrl}
+                            alt="Preview"
+                            className="h-48 w-full object-cover rounded-lg"
+                        />
+                        <button
+                            type="button"
+                            onClick={() => onRemoveImage(sectionId)}
+                            className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-2 hover:bg-red-600 transition-colors"
+                        >
+                            <FaTimes size={16} />
+                        </button>
+                    </div>
+                ) : existingImageUrl ? (
+                    <div className="relative mb-4">
+                        <img
+                            src={existingImageUrl}
+                            alt="Current"
+                            className="h-48 w-full object-cover rounded-lg"
+                        />
+                        <button
+                            type="button"
+                            onClick={() => onRemoveExistingImage(sectionId)}
+                            className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-2"
+                        >
+                            <FaTimes size={16} />
+                        </button>
+                    </div>
+                ) : (
+                    <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100">
+                        <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                            <FaImage className="w-8 h-8 mb-3 text-gray-400" />
+                            <p className="mb-2 text-sm text-gray-500">
+                                <span className="font-semibold">Click to upload</span> or drag and drop
+                            </p>
+                            <p className="text-xs text-gray-500">
+                                PNG, JPG, JPEG (MAX. 5MB)
+                            </p>
+                        </div>
+                        <input
+                            ref={fileInputRef}
+                            type="file"
+                            className="hidden"
+                            onChange={handleFileChange}
+                            accept="image/*"
+                        />
+                    </label>
+                )}
+            </div>
+        );
+    }, (prevProps, nextProps) => {
+        // Custom comparison to prevent unnecessary re-renders
+        return (
+            prevProps.sectionId === nextProps.sectionId &&
+            prevProps.label === nextProps.label &&
+            prevProps.existingImage === nextProps.existingImage &&
+            prevProps.currentImage === nextProps.currentImage
+        );
+    });
+
+    // Main Image upload component (for cover photo)
     const ImageUpload = React.memo(({ name, label, existingImage, currentImage, onImageChange, onRemoveImage }) => {
         const existingImageUrl = existingImage;
         const [previewUrl, setPreviewUrl] = useState(null);
@@ -1023,6 +1179,79 @@ export default function ServicesDataTable({ services, disciplinesData, loading, 
             prevProps.currentImage === nextProps.currentImage
         );
     });
+
+    // Render section components
+    const renderCreateSections = () => {
+        return formData.sections.map((section, index) => (
+            <div key={section.id} className="p-4 border rounded-lg mb-4">
+                <div className="flex justify-between items-center mb-4">
+                    <h3 className="text-lg font-medium">Section {index + 1}</h3>
+                    <button
+                        type="button"
+                        onClick={() => removeSection(section.id)}
+                        className="text-red-500 hover:text-red-700 p-1"
+                        disabled={formData.sections.length === 1}
+                    >
+                        <FaTrash size={16} />
+                    </button>
+                </div>
+                <div className="mb-4">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Content {index + 1}*
+                    </label>
+                    <TiptapWithImg
+                        content={section.content}
+                        onUpdate={(content) => updateSectionContent(section.id, content)}
+                    />
+                </div>
+                <SectionImageUpload
+                    sectionId={section.id}
+                    label={`Image ${index + 1}`}
+                    existingImage={section.existing_image}
+                    currentImage={section.image}
+                    onImageChange={updateSectionImage}
+                    onRemoveImage={removeSectionImage}
+                    onRemoveExistingImage={removeExistingSectionImage}
+                />
+            </div>
+        ));
+    };
+
+    const renderEditSections = () => {
+        return editFormData.sections.map((section, index) => (
+            <div key={section.id} className="p-4 border rounded-lg mb-4">
+                <div className="flex justify-between items-center mb-4">
+                    <h3 className="text-lg font-medium">Section {index + 1}</h3>
+                    <button
+                        type="button"
+                        onClick={() => removeEditSection(section.id)}
+                        className="text-red-500 hover:text-red-700 p-1"
+                        disabled={editFormData.sections.length === 1}
+                    >
+                        <FaTrash size={16} />
+                    </button>
+                </div>
+                <div className="mb-4">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Content {index + 1}*
+                    </label>
+                    <TiptapWithImg
+                        content={section.content}
+                        onUpdate={(content) => updateEditSectionContent(section.id, content)}
+                    />
+                </div>
+                <SectionImageUpload
+                    sectionId={section.id}
+                    label={`Image ${index + 1}`}
+                    existingImage={section.existing_image}
+                    currentImage={section.image}
+                    onImageChange={updateEditSectionImage}
+                    onRemoveImage={removeEditSectionImage}
+                    onRemoveExistingImage={removeExistingEditSectionImage}
+                />
+            </div>
+        ));
+    };
 
     return (
         <div className="shadow-2xl rounded-2xl overflow-hidden bg-white">
@@ -1495,81 +1724,28 @@ export default function ServicesDataTable({ services, disciplinesData, loading, 
                                         )}
                                     </div>
                                 </div>
-                                {/* 
-                                <div className="mb-4">
-                                    <label htmlFor="tags" className="block text-sm font-medium mb-1">Tags</label>
-                                    <Chips
-                                        id="tags"
-                                        name="tags"
-                                        value={formData.tags}
-                                        onChange={handletagsChange}
-                                        placeholder="Enter tags"
-                                        className="w-full p-chips dark:bg-dark2"
-                                        itemTemplate={(tag) => (
-                                            <div className="bg-gray-200 dark:bg-dark1 rounded-full px-3 py-1 text-sm">
-                                                {tag}
+
+                                {/* Dynamic Sections */}
+                                <div className="mb-6">
+                                    <div className="flex justify-between items-center mb-4">
+                                        <h3 className="text-lg font-medium">Sections</h3>
+                                        <button
+                                            type="button"
+                                            onClick={addSection}
+                                            className="bg-primary hover:bg-darkBlue text-white px-3 py-2 rounded-md flex items-center gap-2"
+                                        >
+                                            <FaPlus /> Add Section
+                                        </button>
+                                    </div>
+                                    <div className="space-y-4">
+                                        {formData.sections.length === 0 ? (
+                                            <div className="text-center p-8 border-2 border-dashed rounded-lg">
+                                                <p className="text-gray-500 mb-4">No sections added yet. Click "Add Section" to get started.</p>
+                                                <p className="text-sm text-gray-400">Note: At least one section with content is required.</p>
                                             </div>
+                                        ) : (
+                                            renderCreateSections()
                                         )}
-                                    />
-                                </div> */}
-
-                                {/* Content and Image Sections */}
-                                <div className="space-y-6">
-                                    {/* Section 1 */}
-                                    <div className="p-4 border rounded-lg">
-                                        <h3 className="text-lg font-medium mb-4">Section 1*</h3>
-                                        <div className="mb-4">
-                                            <label className="block text-sm font-medium text-gray-700 mb-1">Content 1*</label>
-                                            <TiptapWithImg
-                                                content={formData.content1}
-                                                onUpdate={handleContent1Change}
-                                            />
-                                        </div>
-                                        <ImageUpload
-                                            name="image1"
-                                            label="Image 1"
-                                            currentImage={formData.image1}
-                                            onImageChange={handleFormChange}
-                                            onRemoveImage={(name) => setFormData(prev => ({ ...prev, [name]: null }))}
-                                        />
-                                    </div>
-
-                                    {/* Section 2 */}
-                                    <div className="p-4 border rounded-lg">
-                                        <h3 className="text-lg font-medium mb-4">Section 2</h3>
-                                        <div className="mb-4">
-                                            <label className="block text-sm font-medium text-gray-700 mb-1">Content 2</label>
-                                            <TiptapWithImg
-                                                content={formData.content2}
-                                                onUpdate={handleContent2Change}
-                                            />
-                                        </div>
-                                        <ImageUpload
-                                            name="image2"
-                                            label="Image 2"
-                                            currentImage={formData.image2}
-                                            onImageChange={handleFormChange}
-                                            onRemoveImage={(name) => setFormData(prev => ({ ...prev, [name]: null }))}
-                                        />
-                                    </div>
-
-                                    {/* Section 3 */}
-                                    <div className="p-4 border rounded-lg">
-                                        <h3 className="text-lg font-medium mb-4">Section 3</h3>
-                                        <div className="mb-4">
-                                            <label className="block text-sm font-medium text-gray-700 mb-1">Content 3</label>
-                                            <TiptapWithImg
-                                                content={formData.content3}
-                                                onUpdate={handleContent3Change}
-                                            />
-                                        </div>
-                                        <ImageUpload
-                                            name="image3"
-                                            label="Image 3"
-                                            currentImage={formData.image3}
-                                            onImageChange={handleFormChange}
-                                            onRemoveImage={(name) => setFormData(prev => ({ ...prev, [name]: null }))}
-                                        />
                                     </div>
                                 </div>
 
@@ -1787,105 +1963,28 @@ export default function ServicesDataTable({ services, disciplinesData, loading, 
                                             )}
                                         </div>
                                     </div>
-                                    {/* 
-                                    <div className="mb-4">
-                                        <label htmlFor="tags" className="block text-sm font-medium mb-1">Tags</label>
-                                        <Chips
-                                            id="tags"
-                                            name="tags"
-                                            value={editFormData.tags}
-                                            onChange={handleEdittagsChange}
-                                            placeholder="Enter tags"
-                                            className="w-full p-chips dark:bg-dark2"
-                                            itemTemplate={(tag) => (
-                                                <div className="bg-gray-200 dark:bg-dark1 rounded-full px-3 py-1 text-sm">
-                                                    {tag}
+
+                                    {/* Dynamic Sections for Edit */}
+                                    <div className="mb-6">
+                                        <div className="flex justify-between items-center mb-4">
+                                            <h3 className="text-lg font-medium">Sections</h3>
+                                            <button
+                                                type="button"
+                                                onClick={addEditSection}
+                                                className="bg-primary hover:bg-darkBlue text-white px-3 py-2 rounded-md flex items-center gap-2"
+                                            >
+                                                <FaPlus /> Add Section
+                                            </button>
+                                        </div>
+                                        <div className="space-y-4">
+                                            {editFormData.sections.length === 0 ? (
+                                                <div className="text-center p-8 border-2 border-dashed rounded-lg">
+                                                    <p className="text-gray-500 mb-4">No sections added yet. Click "Add Section" to get started.</p>
+                                                    <p className="text-sm text-gray-400">Note: At least one section with content is required.</p>
                                                 </div>
+                                            ) : (
+                                                renderEditSections()
                                             )}
-                                        />
-                                    </div> */}
-
-                                    {/* Content and Image Sections */}
-                                    <div className="space-y-6">
-                                        {/* Section 1 */}
-                                        <div className="p-4 border rounded-lg">
-                                            <h3 className="text-lg font-medium mb-4">Section 1*</h3>
-                                            <div className="mb-4">
-                                                <label className="block text-sm font-medium text-gray-700 mb-1">Content 1*</label>
-                                                <TiptapWithImg
-                                                    content={editFormData.content1}
-                                                    onUpdate={handleEditContent1Change}
-                                                />
-                                            </div>
-                                            <ImageUpload
-                                                name="image1"
-                                                label="Image 1"
-                                                existingImage={editFormData.existing_image1}
-                                                currentImage={editFormData.image1}
-                                                onImageChange={handleEditFormChange}
-                                                onRemoveImage={(name) => {
-                                                    if (name.startsWith('existing_')) {
-                                                        const fieldName = name.replace('existing_', '');
-                                                        setEditFormData(prev => ({ ...prev, [name]: null, [fieldName]: null }));
-                                                    } else {
-                                                        setEditFormData(prev => ({ ...prev, [name]: null }));
-                                                    }
-                                                }}
-                                            />
-                                        </div>
-
-                                        {/* Section 2 */}
-                                        <div className="p-4 border rounded-lg">
-                                            <h3 className="text-lg font-medium mb-4">Section 2</h3>
-                                            <div className="mb-4">
-                                                <label className="block text-sm font-medium text-gray-700 mb-1">Content 2</label>
-                                                <TiptapWithImg
-                                                    content={editFormData.content2}
-                                                    onUpdate={handleEditContent2Change}
-                                                />
-                                            </div>
-                                            <ImageUpload
-                                                name="image2"
-                                                label="Image 2"
-                                                existingImage={editFormData.existing_image2}
-                                                currentImage={editFormData.image2}
-                                                onImageChange={handleEditFormChange}
-                                                onRemoveImage={(name) => {
-                                                    if (name.startsWith('existing_')) {
-                                                        const fieldName = name.replace('existing_', '');
-                                                        setEditFormData(prev => ({ ...prev, [name]: null, [fieldName]: null }));
-                                                    } else {
-                                                        setEditFormData(prev => ({ ...prev, [name]: null }));
-                                                    }
-                                                }}
-                                            />
-                                        </div>
-
-                                        {/* Section 3 */}
-                                        <div className="p-4 border rounded-lg">
-                                            <h3 className="text-lg font-medium mb-4">Section 3</h3>
-                                            <div className="mb-4">
-                                                <label className="block text-sm font-medium text-gray-700 mb-1">Content 3</label>
-                                                <TiptapWithImg
-                                                    content={editFormData.content3}
-                                                    onUpdate={handleEditContent3Change}
-                                                />
-                                            </div>
-                                            <ImageUpload
-                                                name="image3"
-                                                label="Image 3"
-                                                existingImage={editFormData.existing_image3}
-                                                currentImage={editFormData.image3}
-                                                onImageChange={handleEditFormChange}
-                                                onRemoveImage={(name) => {
-                                                    if (name.startsWith('existing_')) {
-                                                        const fieldName = name.replace('existing_', '');
-                                                        setEditFormData(prev => ({ ...prev, [name]: null, [fieldName]: null }));
-                                                    } else {
-                                                        setEditFormData(prev => ({ ...prev, [name]: null }));
-                                                    }
-                                                }}
-                                            />
                                         </div>
                                     </div>
 
