@@ -222,6 +222,7 @@ export default function ProjectsDataTable({ projects, disciplinesData, loading, 
         // Process sections for draft storage
         const sectionsForDraft = formData.sections.map(section => ({
             content: section.content || '',
+            caption: section.caption || '', // ADDED: Save caption to draft
             image_meta: section.image ? { name: section.image.name, type: section.image.type, size: section.image.size } : null,
             existing_image: section.existing_image || null
         }));
@@ -251,6 +252,7 @@ export default function ProjectsDataTable({ projects, disciplinesData, loading, 
         const restoredSections = draft.sections?.map(section => ({
             id: Date.now() + Math.random(),
             content: section.content || '',
+            caption: section.caption || '', // ADDED: Restore caption from draft
             image: null,
             existing_image: section.existing_image || null
         })) || [];
@@ -512,6 +514,7 @@ export default function ProjectsDataTable({ projects, disciplinesData, loading, 
         const newSection = {
             id: Date.now() + Math.random(),
             content: '',
+            caption: '', // ADDED: caption field
             image: null,
             existing_image: null
         };
@@ -533,6 +536,15 @@ export default function ProjectsDataTable({ projects, disciplinesData, loading, 
             ...prev,
             sections: prev.sections.map(section =>
                 section.id === sectionId ? { ...section, content } : section
+            )
+        }));
+    };
+
+    const updateSectionCaption = (sectionId, caption) => { // ADDED: Update caption
+        setFormData(prev => ({
+            ...prev,
+            sections: prev.sections.map(section =>
+                section.id === sectionId ? { ...section, caption } : section
             )
         }));
     };
@@ -569,6 +581,7 @@ export default function ProjectsDataTable({ projects, disciplinesData, loading, 
         const newSection = {
             id: Date.now() + Math.random(),
             content: '',
+            caption: '', // ADDED: caption field
             image: null,
             existing_image: null
         };
@@ -590,6 +603,15 @@ export default function ProjectsDataTable({ projects, disciplinesData, loading, 
             ...prev,
             sections: prev.sections.map(section =>
                 section.id === sectionId ? { ...section, content } : section
+            )
+        }));
+    };
+
+    const updateEditSectionCaption = (sectionId, caption) => { // ADDED: Update edit caption
+        setEditFormData(prev => ({
+            ...prev,
+            sections: prev.sections.map(section =>
+                section.id === sectionId ? { ...section, caption } : section
             )
         }));
     };
@@ -645,6 +667,7 @@ export default function ProjectsDataTable({ projects, disciplinesData, loading, 
             const formattedSections = sections.map((section, index) => ({
                 id: Date.now() + index,
                 content: section.content || '',
+                caption: section.caption || '', // ADDED: caption from API
                 image: null,
                 existing_image: section.image || null
             }));
@@ -693,6 +716,7 @@ export default function ProjectsDataTable({ projects, disciplinesData, loading, 
             // Append sections
             formData.sections.forEach((section, index) => {
                 formDataToSend.append(`content${index + 1}`, section.content || '');
+                formDataToSend.append(`caption${index + 1}`, section.caption || ''); // ADDED: Send caption
                 if (section.image instanceof File) {
                     formDataToSend.append(`image${index + 1}`, section.image);
                 }
@@ -760,6 +784,7 @@ export default function ProjectsDataTable({ projects, disciplinesData, loading, 
             // Append sections
             editFormData.sections.forEach((section, index) => {
                 formDataToSend.append(`content${index + 1}`, section.content || '');
+                formDataToSend.append(`caption${index + 1}`, section.caption || ''); // ADDED: Send caption
 
                 // Handle image for this section
                 if (section.image instanceof File) {
@@ -991,9 +1016,11 @@ export default function ProjectsDataTable({ projects, disciplinesData, loading, 
         label,
         existingImage,
         currentImage,
+        caption,
         onImageChange,
         onRemoveImage,
-        onRemoveExistingImage
+        onRemoveExistingImage,
+        onCaptionChange // ADDED: caption change handler
     }) => {
         const existingImageUrl = existingImage;
         const [previewUrl, setPreviewUrl] = useState(null);
@@ -1016,6 +1043,12 @@ export default function ProjectsDataTable({ projects, disciplinesData, loading, 
         const handleFileChange = (e) => {
             if (e.target.files && e.target.files[0]) {
                 onImageChange(sectionId, e.target.files[0]);
+            }
+        };
+
+        const handleCaptionChange = (e) => { // ADDED: caption change handler
+            if (onCaptionChange) {
+                onCaptionChange(sectionId, e.target.value);
             }
         };
 
@@ -1072,6 +1105,21 @@ export default function ProjectsDataTable({ projects, disciplinesData, loading, 
                         />
                     </label>
                 )}
+
+                {/* ADDED: Caption input field */}
+                <div className="mt-4">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Image Caption</label>
+                    <input
+                        type="text"
+                        value={caption || ''}
+                        onChange={handleCaptionChange}
+                        className="w-full px-3 py-2 border rounded-md"
+                        placeholder="Enter image caption (optional)"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">
+                        Add a caption for the image (optional)
+                    </p>
+                </div>
             </div>
         );
     }, (prevProps, nextProps) => {
@@ -1080,7 +1128,8 @@ export default function ProjectsDataTable({ projects, disciplinesData, loading, 
             prevProps.sectionId === nextProps.sectionId &&
             prevProps.label === nextProps.label &&
             prevProps.existingImage === nextProps.existingImage &&
-            prevProps.currentImage === nextProps.currentImage
+            prevProps.currentImage === nextProps.currentImage &&
+            prevProps.caption === nextProps.caption
         );
     });
 
@@ -1198,9 +1247,11 @@ export default function ProjectsDataTable({ projects, disciplinesData, loading, 
                     label={`Image ${index + 1}`}
                     existingImage={section.existing_image}
                     currentImage={section.image}
+                    caption={section.caption} // ADDED: pass caption
                     onImageChange={updateSectionImage}
                     onRemoveImage={removeSectionImage}
                     onRemoveExistingImage={removeExistingSectionImage}
+                    onCaptionChange={updateSectionCaption} // ADDED: caption change handler
                 />
             </div>
         ));
@@ -1234,9 +1285,11 @@ export default function ProjectsDataTable({ projects, disciplinesData, loading, 
                     label={`Image ${index + 1}`}
                     existingImage={section.existing_image}
                     currentImage={section.image}
+                    caption={section.caption} // ADDED: pass caption
                     onImageChange={updateEditSectionImage}
                     onRemoveImage={removeEditSectionImage}
                     onRemoveExistingImage={removeExistingEditSectionImage}
+                    onCaptionChange={updateEditSectionCaption} // ADDED: caption change handler
                 />
             </div>
         ));
