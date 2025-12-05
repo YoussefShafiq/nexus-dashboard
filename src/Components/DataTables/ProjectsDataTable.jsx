@@ -34,6 +34,120 @@ import { useNavigate } from 'react-router-dom';
 import localforage from 'localforage';
 import { XCircle } from 'lucide-react';
 
+// Image upload component for sections
+const SectionImageUpload = React.memo(({
+    sectionId,
+    label,
+    existingImage,
+    currentImage,
+    caption,
+    onImageChange,
+    onRemoveImage,
+    onRemoveExistingImage,
+    onCaptionChange // ADDED: caption change handler
+}) => {
+    const existingImageUrl = existingImage;
+    const [previewUrl, setPreviewUrl] = useState(null);
+    const fileInputRef = useRef(null);
+
+    // Create preview URL for current image and clean up on unmount
+    useEffect(() => {
+        if (currentImage && currentImage instanceof File) {
+            const url = URL.createObjectURL(currentImage);
+            setPreviewUrl(url);
+            return () => {
+                URL.revokeObjectURL(url);
+                setPreviewUrl(null);
+            };
+        } else {
+            setPreviewUrl(null);
+        }
+    }, [currentImage]);
+
+    const handleFileChange = (e) => {
+        if (e.target.files && e.target.files[0]) {
+            onImageChange(sectionId, e.target.files[0]);
+        }
+    };
+
+    const handleCaptionChange = (e) => { // ADDED: caption change handler
+        if (onCaptionChange) {
+            onCaptionChange(sectionId, e.target.value);
+        }
+    };
+
+    return (
+        <div className="mb-4">
+            <label className="block text-sm font-medium text-gray-700 mb-1">{label}</label>
+            {previewUrl ? (
+                <div className="relative mb-4">
+                    <img
+                        src={previewUrl}
+                        alt="Preview"
+                        className="h-48 w-full object-cover rounded-lg"
+                    />
+                    <button
+                        type="button"
+                        onClick={() => onRemoveImage(sectionId)}
+                        className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-2 hover:bg-red-600 transition-colors"
+                    >
+                        <FaTimes size={16} />
+                    </button>
+                </div>
+            ) : existingImageUrl ? (
+                <div className="relative mb-4">
+                    <img
+                        src={existingImageUrl}
+                        alt="Current"
+                        className="h-48 w-full object-cover rounded-lg"
+                    />
+                    <button
+                        type="button"
+                        onClick={() => onRemoveExistingImage(sectionId)}
+                        className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-2"
+                    >
+                        <FaTimes size={16} />
+                    </button>
+                </div>
+            ) : (
+                <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100">
+                    <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                        <FaImage className="w-8 h-8 mb-3 text-gray-400" />
+                        <p className="mb-2 text-sm text-gray-500">
+                            <span className="font-semibold">Click to upload</span> or drag and drop
+                        </p>
+                        <p className="text-xs text-gray-500">
+                            PNG, JPG, JPEG (MAX. 5MB)
+                        </p>
+                    </div>
+                    <input
+                        ref={fileInputRef}
+                        type="file"
+                        className="hidden"
+                        onChange={handleFileChange}
+                        accept="image/*"
+                    />
+                </label>
+            )}
+
+            {/* ADDED: Caption input field */}
+            <div className="mt-4">
+                <label className="block text-sm font-medium text-gray-700 mb-1">Image Caption</label>
+                <input
+                    type="text"
+                    value={caption || ''}
+                    onChange={handleCaptionChange}
+                    className="w-full px-3 py-2 border rounded-md"
+                    placeholder="Enter image caption (optional)"
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                    Add a caption for the image (optional)
+                </p>
+            </div>
+        </div>
+    );
+});
+
 export default function ProjectsDataTable({ projects, disciplinesData, loading, refetch }) {
     const navigate = useNavigate();
     const queryClient = useQueryClient();
@@ -1010,128 +1124,7 @@ export default function ProjectsDataTable({ projects, disciplinesData, loading, 
         }
     };
 
-    // Image upload component for sections
-    const SectionImageUpload = React.memo(({
-        sectionId,
-        label,
-        existingImage,
-        currentImage,
-        caption,
-        onImageChange,
-        onRemoveImage,
-        onRemoveExistingImage,
-        onCaptionChange // ADDED: caption change handler
-    }) => {
-        const existingImageUrl = existingImage;
-        const [previewUrl, setPreviewUrl] = useState(null);
-        const fileInputRef = useRef(null);
 
-        // Create preview URL for current image and clean up on unmount
-        useEffect(() => {
-            if (currentImage && currentImage instanceof File) {
-                const url = URL.createObjectURL(currentImage);
-                setPreviewUrl(url);
-                return () => {
-                    URL.revokeObjectURL(url);
-                    setPreviewUrl(null);
-                };
-            } else {
-                setPreviewUrl(null);
-            }
-        }, [currentImage]);
-
-        const handleFileChange = (e) => {
-            if (e.target.files && e.target.files[0]) {
-                onImageChange(sectionId, e.target.files[0]);
-            }
-        };
-
-        const handleCaptionChange = (e) => { // ADDED: caption change handler
-            if (onCaptionChange) {
-                onCaptionChange(sectionId, e.target.value);
-            }
-        };
-
-        return (
-            <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-1">{label}</label>
-                {previewUrl ? (
-                    <div className="relative mb-4">
-                        <img
-                            src={previewUrl}
-                            alt="Preview"
-                            className="h-48 w-full object-cover rounded-lg"
-                        />
-                        <button
-                            type="button"
-                            onClick={() => onRemoveImage(sectionId)}
-                            className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-2 hover:bg-red-600 transition-colors"
-                        >
-                            <FaTimes size={16} />
-                        </button>
-                    </div>
-                ) : existingImageUrl ? (
-                    <div className="relative mb-4">
-                        <img
-                            src={existingImageUrl}
-                            alt="Current"
-                            className="h-48 w-full object-cover rounded-lg"
-                        />
-                        <button
-                            type="button"
-                            onClick={() => onRemoveExistingImage(sectionId)}
-                            className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-2"
-                        >
-                            <FaTimes size={16} />
-                        </button>
-                    </div>
-                ) : (
-                    <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100">
-                        <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                            <FaImage className="w-8 h-8 mb-3 text-gray-400" />
-                            <p className="mb-2 text-sm text-gray-500">
-                                <span className="font-semibold">Click to upload</span> or drag and drop
-                            </p>
-                            <p className="text-xs text-gray-500">
-                                PNG, JPG, JPEG (MAX. 5MB)
-                            </p>
-                        </div>
-                        <input
-                            ref={fileInputRef}
-                            type="file"
-                            className="hidden"
-                            onChange={handleFileChange}
-                            accept="image/*"
-                        />
-                    </label>
-                )}
-
-                {/* ADDED: Caption input field */}
-                <div className="mt-4">
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Image Caption</label>
-                    <input
-                        type="text"
-                        value={caption || ''}
-                        onChange={handleCaptionChange}
-                        className="w-full px-3 py-2 border rounded-md"
-                        placeholder="Enter image caption (optional)"
-                    />
-                    <p className="text-xs text-gray-500 mt-1">
-                        Add a caption for the image (optional)
-                    </p>
-                </div>
-            </div>
-        );
-    }, (prevProps, nextProps) => {
-        // Custom comparison to prevent unnecessary re-renders
-        return (
-            prevProps.sectionId === nextProps.sectionId &&
-            prevProps.label === nextProps.label &&
-            prevProps.existingImage === nextProps.existingImage &&
-            prevProps.currentImage === nextProps.currentImage &&
-            prevProps.caption === nextProps.caption
-        );
-    });
 
     // Main Image upload component (for cover photo)
     const ImageUpload = React.memo(({ name, label, existingImage, currentImage, onImageChange, onRemoveImage }) => {
@@ -1769,16 +1762,6 @@ export default function ProjectsDataTable({ projects, disciplinesData, loading, 
 
                                 {/* Dynamic Sections */}
                                 <div className="mb-6">
-                                    <div className="flex justify-between items-center mb-4">
-                                        <h3 className="text-lg font-medium">Sections</h3>
-                                        <button
-                                            type="button"
-                                            onClick={addSection}
-                                            className="bg-primary hover:bg-darkBlue text-white px-3 py-2 rounded-md flex items-center gap-2"
-                                        >
-                                            <FaPlus /> Add Section
-                                        </button>
-                                    </div>
                                     <div className="space-y-4">
                                         {formData.sections.length === 0 ? (
                                             <div className="text-center p-8 border-2 border-dashed rounded-lg">
@@ -1788,6 +1771,16 @@ export default function ProjectsDataTable({ projects, disciplinesData, loading, 
                                         ) : (
                                             renderCreateSections()
                                         )}
+                                    </div>
+                                    <div className="flex justify-between items-center mb-4">
+                                        <h3 className="text-lg font-medium">Sections</h3>
+                                        <button
+                                            type="button"
+                                            onClick={addSection}
+                                            className="bg-primary hover:bg-darkBlue text-white px-3 py-2 rounded-md flex items-center gap-2"
+                                        >
+                                            <FaPlus /> Add Section
+                                        </button>
                                     </div>
                                 </div>
 
