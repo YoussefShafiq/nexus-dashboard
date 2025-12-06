@@ -185,6 +185,7 @@ export default function ProjectsDataTable({ projects, disciplinesData, loading, 
         slug: '',
         description: '',
         is_active: true,
+        show_on_home: false,
         cover_photo: null,
         disciplines: [],
         sections: [] // Changed from fixed content1-3 to dynamic sections array
@@ -196,6 +197,7 @@ export default function ProjectsDataTable({ projects, disciplinesData, loading, 
         slug: '',
         description: '',
         is_active: true,
+        show_on_home: false,
         cover_photo: null,
         existing_cover_photo: null,
         disciplines: [],
@@ -347,6 +349,7 @@ export default function ProjectsDataTable({ projects, disciplinesData, loading, 
             slug: formData.slug,
             description: formData.description,
             is_active: formData.is_active,
+            show_on_home: formData.show_on_home || false,
             disciplines: formData.disciplines || [],
             sections: sectionsForDraft,
             cover_photo_meta: formData.cover_photo ? { name: formData.cover_photo.name, type: formData.cover_photo.type, size: formData.cover_photo.size } : null,
@@ -376,6 +379,7 @@ export default function ProjectsDataTable({ projects, disciplinesData, loading, 
             slug: draft.slug || '',
             description: draft.description || '',
             is_active: draft.is_active ?? true,
+            show_on_home: draft.show_on_home || false,
             disciplines: draft.disciplines || [],
             sections: restoredSections,
             cover_photo: null,
@@ -763,6 +767,7 @@ export default function ProjectsDataTable({ projects, disciplinesData, loading, 
             slug: '',
             description: '',
             is_active: true,
+            show_on_home: false,
             cover_photo: null,
             disciplines: [],
             sections: []
@@ -792,6 +797,7 @@ export default function ProjectsDataTable({ projects, disciplinesData, loading, 
                 slug: projectData.slug,
                 description: projectData.description || '',
                 is_active: projectData.is_active,
+                show_on_home: projectData.show_on_home || false,
                 cover_photo: null,
                 existing_cover_photo: projectData.cover_photo,
                 disciplines: projectData.disciplines ? projectData.disciplines.map(d => d.id) : [],
@@ -821,6 +827,7 @@ export default function ProjectsDataTable({ projects, disciplinesData, loading, 
             formDataToSend.append('title', formData.title);
             formDataToSend.append('slug', formData.slug);
             formDataToSend.append('is_active', formData.is_active ? 1 : 0);
+            formDataToSend.append('show_on_home', formData.show_on_home ? 1 : 0);
             formDataToSend.append('description', formData.description);
 
             formData.disciplines.forEach(disciplineId => {
@@ -888,6 +895,7 @@ export default function ProjectsDataTable({ projects, disciplinesData, loading, 
             formDataToSend.append('title', editFormData.title);
             formDataToSend.append('slug', editFormData.slug);
             formDataToSend.append('is_active', editFormData.is_active ? 1 : 0);
+            formDataToSend.append('show_on_home', editFormData.show_on_home ? 1 : 0);
             formDataToSend.append('description', editFormData.description);
             formDataToSend.append('_method', 'POST');
 
@@ -1732,6 +1740,21 @@ export default function ProjectsDataTable({ projects, disciplinesData, loading, 
                                             Active
                                         </label>
                                     </div>
+
+                                    {/* ADD THIS CHECKBOX */}
+                                    <div className="flex items-center">
+                                        <input
+                                            type="checkbox"
+                                            id="show_on_home"
+                                            name="show_on_home"
+                                            checked={formData.show_on_home}
+                                            onChange={handleFormChange}
+                                            className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                                        />
+                                        <label htmlFor="show_on_home" className="ml-2 text-sm text-gray-700">
+                                            Show on Home Screen
+                                        </label>
+                                    </div>
                                 </div>
                                 {/* Disciplines Checkboxes */}
                                 <div className="mb-4">
@@ -1970,6 +1993,21 @@ export default function ProjectsDataTable({ projects, disciplinesData, loading, 
                                                 Active
                                             </label>
                                         </div>
+
+                                        {/* ADD THIS CHECKBOX */}
+                                        <div className="flex items-center">
+                                            <input
+                                                type="checkbox"
+                                                id="edit_show_on_home"
+                                                name="show_on_home"
+                                                checked={editFormData.show_on_home}
+                                                onChange={handleEditFormChange}
+                                                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                                            />
+                                            <label htmlFor="edit_show_on_home" className="ml-2 text-sm text-gray-700">
+                                                Show on Home Screen
+                                            </label>
+                                        </div>
                                     </div>
                                     {/* Disciplines Checkboxes for Edit */}
                                     <div className="mb-4">
@@ -2002,13 +2040,6 @@ export default function ProjectsDataTable({ projects, disciplinesData, loading, 
                                     <div className="mb-6">
                                         <div className="flex justify-between items-center mb-4">
                                             <h3 className="text-lg font-medium">Sections</h3>
-                                            <button
-                                                type="button"
-                                                onClick={addEditSection}
-                                                className="bg-primary hover:bg-darkBlue text-white px-3 py-2 rounded-md flex items-center gap-2"
-                                            >
-                                                <FaPlus /> Add Section
-                                            </button>
                                         </div>
                                         <div className="space-y-4">
                                             {editFormData.sections.length === 0 ? (
@@ -2019,6 +2050,16 @@ export default function ProjectsDataTable({ projects, disciplinesData, loading, 
                                             ) : (
                                                 renderEditSections()
                                             )}
+                                        </div>
+
+                                        <div className="flex justify-end items-center mb-4">
+                                            <button
+                                                type="button"
+                                                onClick={addEditSection}
+                                                className="bg-primary hover:bg-darkBlue text-white px-3 py-2 rounded-md flex items-center gap-2"
+                                            >
+                                                <FaPlus /> Add Section
+                                            </button>
                                         </div>
                                     </div>
 
