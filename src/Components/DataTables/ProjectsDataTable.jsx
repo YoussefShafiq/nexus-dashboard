@@ -159,6 +159,7 @@ export default function ProjectsDataTable({ projects, disciplinesData, loading, 
         title: '',
         status: '',
         author: '',
+        discipline: '', // ADDED: Discipline filter
         created_from: '', // YYYY-MM-DD
         created_to: '' // YYYY-MM-DD
     });
@@ -968,6 +969,13 @@ export default function ProjectsDataTable({ projects, disciplinesData, loading, 
         const matchesAuthor =
             filters.author === '' || (project.author?.name ? project.author.name.toLowerCase().includes(filters.author.toLowerCase()) : false);
 
+        // NEW: Discipline filter
+        const matchesDiscipline = filters.discipline === '' ||
+            (project.disciplines && project.disciplines.some(discipline =>
+                discipline.id.toString() === filters.discipline ||
+                discipline.title.toLowerCase().includes(filters.discipline.toLowerCase())
+            ));
+
         // Date range filter on created_at
         let matchesDate = true;
         if (project.created_at) {
@@ -982,7 +990,7 @@ export default function ProjectsDataTable({ projects, disciplinesData, loading, 
             }
         }
 
-        return matchesGlobal && matchesTitle && matchesStatus && matchesAuthor && matchesDate;
+        return matchesGlobal && matchesTitle && matchesStatus && matchesAuthor && matchesDiscipline && matchesDate;
     }) || [];
 
     // Pagination logic
@@ -1131,8 +1139,6 @@ export default function ProjectsDataTable({ projects, disciplinesData, loading, 
             setIsBulkActionLoading(false);
         }
     };
-
-
 
     // Main Image upload component (for cover photo)
     const ImageUpload = React.memo(({ name, label, existingImage, currentImage, onImageChange, onRemoveImage }) => {
@@ -1356,6 +1362,22 @@ export default function ProjectsDataTable({ projects, disciplinesData, loading, 
                                 </select>
                             </th>
                             <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                {/* NEW: Discipline filter dropdown */}
+                                <select
+                                    value={filters.discipline}
+                                    onChange={(e) => handleFilterChange('discipline', e.target.value)}
+                                    className="text-xs p-1 border rounded w-full"
+                                >
+                                    <option value="">All Disciplines</option>
+                                    {disciplinesData?.map((discipline) => (
+                                        <option key={discipline.id} value={discipline.id}>
+                                            {discipline.title}
+                                            {!discipline.is_active && ' (inactive)'}
+                                        </option>
+                                    ))}
+                                </select>
+                            </th>
+                            <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                 <DateRangePicker
                                     initialRange={{
                                         startDate: filters.created_from ? new Date(`${filters.created_from}T00:00:00`) : null,
@@ -1382,7 +1404,7 @@ export default function ProjectsDataTable({ projects, disciplinesData, loading, 
                     <tbody className="bg-white divide-y divide-gray-200 text-sm">
                         {loading ? (
                             <tr>
-                                <td colSpan="6" className="px-3 py-4 text-center">
+                                <td colSpan="7" className="px-3 py-4 text-center"> {/* Updated colSpan from 6 to 7 */}
                                     <div className="flex justify-center items-center gap-2">
                                         <FaSpinner className="animate-spin" size={18} />
                                         Loading projects...
@@ -1391,7 +1413,7 @@ export default function ProjectsDataTable({ projects, disciplinesData, loading, 
                             </tr>
                         ) : paginatedProjects.length === 0 ? (
                             <tr>
-                                <td colSpan="6" className="px-3 py-4 text-center">
+                                <td colSpan="7" className="px-3 py-4 text-center"> {/* Updated colSpan from 6 to 7 */}
                                     No projects found
                                 </td>
                             </tr>
@@ -1425,6 +1447,23 @@ export default function ProjectsDataTable({ projects, disciplinesData, loading, 
                                     </td>
                                     <td className="px-3 py-4 whitespace-nowrap">
                                         {statusBadge(project.is_active)}
+                                    </td>
+                                    <td className="px-3 py-4 whitespace-nowrap">
+                                        {/* NEW: Display disciplines for each project */}
+                                        <div className="flex flex-wrap gap-1">
+                                            {project.disciplines && project.disciplines.length > 0 ? (
+                                                project.disciplines.map((discipline) => (
+                                                    <span
+                                                        key={discipline.id}
+                                                        className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium"
+                                                    >
+                                                        {discipline.title}
+                                                    </span>
+                                                ))
+                                            ) : (
+                                                <span className="text-gray-500 text-xs">No disciplines</span>
+                                            )}
+                                        </div>
                                     </td>
                                     <td className="px-3 py-4 whitespace-nowrap">
                                         {project.created_at ? new Date(project.created_at).toLocaleDateString() : '-'}

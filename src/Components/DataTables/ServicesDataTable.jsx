@@ -21,7 +21,8 @@ import {
     FaSquare,
     FaSave,
     FaFolderOpen,
-    FaTrash
+    FaTrash,
+    FaFilter
 } from 'react-icons/fa';
 import TiptapWithImg from '../TextEditor/TiptapWithImg';
 import DateRangePicker from '../ReusableComponents/DateRangePicker';
@@ -160,6 +161,7 @@ export default function ServicesDataTable({ services, disciplinesData, loading, 
         title: '',
         status: '',
         author: '',
+        discipline: '', // ADDED: Discipline filter
         created_from: '', // YYYY-MM-DD
         created_to: '' // YYYY-MM-DD
     });
@@ -980,6 +982,10 @@ export default function ServicesDataTable({ services, disciplinesData, loading, 
         const matchesAuthor =
             filters.author === '' || (service.author?.name ? service.author.name.toLowerCase().includes(filters.author.toLowerCase()) : false);
 
+        // Discipline filter - check if service has the selected discipline
+        const matchesDiscipline = filters.discipline === '' ||
+            (service.disciplines && service.disciplines.some(d => d.id.toString() === filters.discipline));
+
         // Date range filter on created_at
         let matchesDate = true;
         if (service.created_at) {
@@ -994,7 +1000,7 @@ export default function ServicesDataTable({ services, disciplinesData, loading, 
             }
         }
 
-        return matchesGlobal && matchesTitle && matchesStatus && matchesAuthor && matchesDate;
+        return matchesGlobal && matchesTitle && matchesStatus && matchesAuthor && matchesDiscipline && matchesDate;
     }) || [];
 
     // Pagination logic
@@ -1356,6 +1362,22 @@ export default function ServicesDataTable({ services, disciplinesData, loading, 
                                 Cover Photo
                             </th>
                             <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                {/* ADDED: Discipline Filter */}
+                                <select
+                                    value={filters.discipline}
+                                    onChange={(e) => handleFilterChange('discipline', e.target.value)}
+                                    className="text-xs p-1 border rounded w-full"
+                                >
+                                    <option value="">All Disciplines</option>
+                                    {disciplinesData?.map((discipline) => (
+                                        <option key={discipline.id} value={discipline.id}>
+                                            {discipline.title}
+                                            {!discipline.is_active && ' (inactive)'}
+                                        </option>
+                                    ))}
+                                </select>
+                            </th>
+                            <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                 <select
                                     value={filters.status}
                                     onChange={(e) => handleFilterChange('status', e.target.value)}
@@ -1393,7 +1415,7 @@ export default function ServicesDataTable({ services, disciplinesData, loading, 
                     <tbody className="bg-white divide-y divide-gray-200 text-sm">
                         {loading ? (
                             <tr>
-                                <td colSpan="6" className="px-3 py-4 text-center">
+                                <td colSpan="7" className="px-3 py-4 text-center">
                                     <div className="flex justify-center items-center gap-2">
                                         <FaSpinner className="animate-spin" size={18} />
                                         Loading services...
@@ -1402,7 +1424,7 @@ export default function ServicesDataTable({ services, disciplinesData, loading, 
                             </tr>
                         ) : paginatedServices.length === 0 ? (
                             <tr>
-                                <td colSpan="6" className="px-3 py-4 text-center">
+                                <td colSpan="7" className="px-3 py-4 text-center">
                                     No services found
                                 </td>
                             </tr>
@@ -1433,6 +1455,23 @@ export default function ServicesDataTable({ services, disciplinesData, loading, 
                                                 className="h-10 w-10 object-cover rounded"
                                             />
                                         )}
+                                    </td>
+                                    <td className="px-3 py-4 whitespace-nowrap">
+                                        {/* NEW: Display disciplines for each project */}
+                                        <div className="flex flex-wrap gap-1">
+                                            {service.disciplines && service.disciplines.length > 0 ? (
+                                                service.disciplines.map((discipline) => (
+                                                    <span
+                                                        key={discipline.id}
+                                                        className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium"
+                                                    >
+                                                        {discipline.title}
+                                                    </span>
+                                                ))
+                                            ) : (
+                                                <span className="text-gray-500 text-xs">No disciplines</span>
+                                            )}
+                                        </div>
                                     </td>
                                     <td className="px-3 py-4 whitespace-nowrap">
                                         {statusBadge(service.is_active)}

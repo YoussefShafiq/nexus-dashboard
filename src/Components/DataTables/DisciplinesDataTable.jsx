@@ -51,6 +51,7 @@ export default function DisciplinessDataTable({ disciplinessData, loading, refet
     // Form states
     const [formData, setFormData] = useState({
         title: '',
+        description: '',
         is_active: true
     });
 
@@ -139,6 +140,7 @@ export default function DisciplinessDataTable({ disciplinessData, loading, refet
         setIsEditing(false);
         setFormData({
             title: '',
+            description: '',
             is_active: true
         });
         setShowAddEditModal(true);
@@ -150,6 +152,7 @@ export default function DisciplinessDataTable({ disciplinessData, loading, refet
         // Set initial form data immediately from the row data
         setFormData({
             title: discipline.title || '',
+            description: discipline.description || '',
             is_active: discipline.is_active || false
         });
         setShowAddEditModal(true);
@@ -161,6 +164,7 @@ export default function DisciplinessDataTable({ disciplinessData, loading, refet
             setFormData(prev => ({
                 ...prev,
                 title: disciplineDetails.title || prev.title,
+                description: disciplineDetails.description || prev.description,
                 is_active: disciplineDetails.is_active || prev.is_active
             }));
         }
@@ -266,7 +270,6 @@ export default function DisciplinessDataTable({ disciplinessData, loading, refet
 
     const handleFormSubmit = (e) => {
         e.preventDefault();
-        // formData.append('Is_active', true);
         if (!formData.title) {
             toast.error('Please fill in all required fields');
             return;
@@ -287,6 +290,7 @@ export default function DisciplinessDataTable({ disciplinessData, loading, refet
         const matchesGlobal =
             filters.global === '' ||
             discipline.title?.toLowerCase().includes(filters.global.toLowerCase()) ||
+            discipline.description?.toLowerCase().includes(filters.global.toLowerCase()) ||
             discipline.created_by?.toLowerCase().includes(filters.global.toLowerCase());
 
         const matchesTitle = filters.title === '' ||
@@ -510,6 +514,11 @@ export default function DisciplinessDataTable({ disciplinessData, loading, refet
                                                 <div className="text-sm font-medium text-gray-900">
                                                     {discipline.title}
                                                 </div>
+                                                {discipline.description && (
+                                                    <div className="text-xs text-gray-500 truncate max-w-xs">
+                                                        {discipline.description}
+                                                    </div>
+                                                )}
                                             </div>
                                         </div>
                                     </td>
@@ -660,6 +669,12 @@ export default function DisciplinessDataTable({ disciplinessData, loading, refet
                                             <label className="block text-sm font-medium text-gray-700">Title</label>
                                             <p className="mt-1 text-lg font-semibold text-gray-900">{selectedDiscipline.title}</p>
                                         </div>
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700">Description</label>
+                                            <p className="mt-1 text-sm text-gray-900">
+                                                {selectedDiscipline.description || 'No description provided'}
+                                            </p>
+                                        </div>
                                         <div className="grid grid-cols-2 gap-4">
                                             <div>
                                                 <label className="block text-sm font-medium text-gray-700">Status</label>
@@ -750,27 +765,22 @@ export default function DisciplinessDataTable({ disciplinessData, loading, refet
                                         />
                                     </div>
 
-                                    {/* Status Toggle */}
-                                    {/* 
+                                    {/* Description */}
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700 mb-1">
-                                            Status
+                                            Description
                                         </label>
-                                        <div className="flex items-center gap-2">
-                                            <button
-                                                type="button"
-                                                onClick={() => setFormData(prev => ({ ...prev, is_active: !prev.is_active }))}
-                                                className={`relative inline-flex h-6 w-11 items-center rounded-full ${formData.is_active ? 'bg-green-500' : 'bg-gray-300'}`}
-                                            >
-                                                <span
-                                                    className={`inline-block h-4 w-4 transform rounded-full bg-white transition ${formData.is_active ? 'translate-x-6' : 'translate-x-1'}`}
-                                                />
-                                            </button>
-                                            <span className="text-sm text-gray-700">
-                                                {formData.is_active ? 'Active' : 'Inactive'}
-                                            </span>
-                                        </div>
-                                    </div> */}
+                                        <textarea
+                                            value={formData.description}
+                                            onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+                                            className="w-full px-3 py-2 border rounded-md focus:outline-primary"
+                                            placeholder="Enter discipline description"
+                                            rows={4}
+                                        />
+                                        <p className="text-xs text-gray-500 mt-1">
+                                            Provide a detailed description of the discipline (optional)
+                                        </p>
+                                    </div>
 
                                 </div>
 
