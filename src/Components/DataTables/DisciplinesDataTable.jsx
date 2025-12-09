@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
 import toast from 'react-hot-toast';
 import axios from 'axios';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -14,12 +14,214 @@ import {
     FaEye,
     FaFilter,
     FaSearch,
-    FaToggleOn,
-    FaToggleOff
+    FaImage,
+    FaSave,
+    FaFolderOpen,
+    FaTrash,
+    FaTimesCircle,
+    FaSortNumericUp,
+    FaSortNumericDown
 } from 'react-icons/fa';
+import TiptapWithImg from '../TextEditor/TiptapWithImg';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
+import localforage from 'localforage';
 import { XCircle } from 'lucide-react';
+
+// Image upload component for sections
+const SectionImageUpload = React.memo(({
+    sectionId,
+    label,
+    existingImage,
+    currentImage,
+    caption,
+    onImageChange,
+    onRemoveImage,
+    onRemoveExistingImage,
+    onCaptionChange
+}) => {
+    const existingImageUrl = existingImage;
+    const [previewUrl, setPreviewUrl] = useState(null);
+    const fileInputRef = useRef(null);
+
+    useEffect(() => {
+        if (currentImage && currentImage instanceof File) {
+            const url = URL.createObjectURL(currentImage);
+            setPreviewUrl(url);
+            return () => {
+                URL.revokeObjectURL(url);
+                setPreviewUrl(null);
+            };
+        } else {
+            setPreviewUrl(null);
+        }
+    }, [currentImage]);
+
+    const handleFileChange = (e) => {
+        if (e.target.files && e.target.files[0]) {
+            onImageChange(sectionId, e.target.files[0]);
+        }
+    };
+
+    const handleCaptionChange = (e) => {
+        if (onCaptionChange) {
+            onCaptionChange(sectionId, e.target.value);
+        }
+    };
+
+    return (
+        <div className="mb-4">
+            <label className="block text-sm font-medium text-gray-700 mb-1">{label}</label>
+            {previewUrl ? (
+                <div className="relative mb-4">
+                    <img
+                        src={previewUrl}
+                        alt="Preview"
+                        className="h-48 w-full object-cover rounded-lg"
+                    />
+                    <button
+                        type="button"
+                        onClick={() => onRemoveImage(sectionId)}
+                        className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-2 hover:bg-red-600 transition-colors"
+                    >
+                        <FaTimes size={16} />
+                    </button>
+                </div>
+            ) : existingImageUrl ? (
+                <div className="relative mb-4">
+                    <img
+                        src={existingImageUrl}
+                        alt="Current"
+                        className="h-48 w-full object-cover rounded-lg"
+                    />
+                    <button
+                        type="button"
+                        onClick={() => onRemoveExistingImage(sectionId)}
+                        className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-2"
+                    >
+                        <FaTimes size={16} />
+                    </button>
+                </div>
+            ) : (
+                <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100">
+                    <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                        <FaImage className="w-8 h-8 mb-3 text-gray-400" />
+                        <p className="mb-2 text-sm text-gray-500">
+                            <span className="font-semibold">Click to upload</span> or drag and drop
+                        </p>
+                        <p className="text-xs text-gray-500">
+                            PNG, JPG, JPEG (MAX. 5MB)
+                        </p>
+                    </div>
+                    <input
+                        ref={fileInputRef}
+                        type="file"
+                        className="hidden"
+                        onChange={handleFileChange}
+                        accept="image/*"
+                    />
+                </label>
+            )}
+
+            <div className="mt-4">
+                <label className="block text-sm font-medium text-gray-700 mb-1">Image Caption</label>
+                <input
+                    type="text"
+                    value={caption || ''}
+                    onChange={handleCaptionChange}
+                    className="w-full px-3 py-2 border rounded-md"
+                    placeholder="Enter image caption (optional)"
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                    Add a caption for the image (optional)
+                </p>
+            </div>
+        </div>
+    );
+});
+
+// Main Image upload component (for cover photo)
+const ImageUpload = React.memo(({ name, label, existingImage, currentImage, onImageChange, onRemoveImage }) => {
+    const existingImageUrl = existingImage;
+    const [previewUrl, setPreviewUrl] = useState(null);
+
+    useEffect(() => {
+        if (currentImage && currentImage instanceof File) {
+            const url = URL.createObjectURL(currentImage);
+            setPreviewUrl(url);
+            return () => {
+                URL.revokeObjectURL(url);
+                setPreviewUrl(null);
+            };
+        } else {
+            setPreviewUrl(null);
+        }
+    }, [currentImage]);
+
+    return (
+        <div className="mb-4">
+            <label className="block text-sm font-medium text-gray-700 mb-1">{label}</label>
+            {previewUrl ? (
+                <div className="relative mb-4">
+                    <img
+                        src={previewUrl}
+                        alt="Preview"
+                        className="h-48 w-full object-cover rounded-lg"
+                    />
+                    <button
+                        type="button"
+                        onClick={() => onRemoveImage(name)}
+                        className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-2 hover:bg-red-600 transition-colors"
+                    >
+                        <FaTimes size={16} />
+                    </button>
+                </div>
+            ) : existingImageUrl ? (
+                <div className="relative mb-4">
+                    <img
+                        src={existingImageUrl}
+                        alt="Current"
+                        className="h-48 w-full object-cover rounded-lg"
+                    />
+                    <button
+                        type="button"
+                        onClick={() => onRemoveImage(`existing_${name}`)}
+                        className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-2"
+                    >
+                        <FaTimes size={16} />
+                    </button>
+                </div>
+            ) : (
+                <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100">
+                    <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                        <FaImage className="w-8 h-8 mb-3 text-gray-400" />
+                        <p className="mb-2 text-sm text-gray-500">
+                            <span className="font-semibold">Click to upload</span> or drag and drop
+                        </p>
+                        <p className="text-xs text-gray-500">
+                            PNG, JPG, JPEG (MAX. 5MB)
+                        </p>
+                    </div>
+                    <input
+                        id={name}
+                        name={name}
+                        type="file"
+                        className="hidden"
+                        onChange={onImageChange}
+                        accept="image/*"
+                    />
+                </label>
+            )}
+        </div>
+    );
+}, (prevProps, nextProps) => {
+    return (
+        prevProps.name === nextProps.name &&
+        prevProps.label === nextProps.label &&
+        prevProps.existingImage === nextProps.existingImage &&
+        prevProps.currentImage === nextProps.currentImage
+    );
+});
 
 export default function DisciplinessDataTable({ disciplinessData, loading, refetch }) {
     const navigate = useNavigate();
@@ -41,19 +243,52 @@ export default function DisciplinessDataTable({ disciplinessData, loading, refet
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
     const [disciplineToDelete, setDisciplineToDelete] = useState(null);
     const [togglingDisciplineId, setTogglingDisciplineId] = useState(null);
+    const [showAddModal, setShowAddModal] = useState(false);
+    const [showEditModal, setShowEditModal] = useState(false);
+    const [updatingDiscipline, setUpdatingDiscipline] = useState(false);
+    const [editingDisciplineId, setEditingDisciplineId] = useState(null);
+    const [showBulkDeleteConfirm, setShowBulkDeleteConfirm] = useState(false);
 
     // Modal states
     const [showDetailsModal, setShowDetailsModal] = useState(false);
     const [selectedDiscipline, setSelectedDiscipline] = useState(null);
-    const [showAddEditModal, setShowAddEditModal] = useState(false);
-    const [isEditing, setIsEditing] = useState(false);
 
-    // Form states
+    // Form states with sections
     const [formData, setFormData] = useState({
         title: '',
+        slug: '',
         description: '',
-        is_active: true
+        order: 0, // Added order field
+        is_active: true,
+        show_on_home: false,
+        cover_photo: null,
+        sections: []
     });
+
+    const [editFormData, setEditFormData] = useState({
+        id: null,
+        title: '',
+        slug: '',
+        description: '',
+        order: 0, // Added order field
+        is_active: true,
+        show_on_home: false,
+        cover_photo: null,
+        existing_cover_photo: null,
+        sections: []
+    });
+
+    // Slug editing states
+    const [isSlugManuallyEdited, setIsSlugManuallyEdited] = useState(false);
+    const [isEditSlugManuallyEdited, setIsEditSlugManuallyEdited] = useState(false);
+
+    // Drafts functionality
+    const DRAFTS_STORAGE_KEY = 'disciplineDrafts';
+    const DRAFTS_FALLBACK_KEY = 'disciplineDrafts_beforeunload_fallback';
+    const [drafts, setDrafts] = useState([]);
+    const [activeDraftId, setActiveDraftId] = useState(null);
+    const addAutoSaveInterval = useRef(null);
+    const lastAutoSaveRef = useRef('');
 
     // Fetch current user for permissions
     const { data: currentUser } = useQuery({
@@ -70,11 +305,11 @@ export default function DisciplinessDataTable({ disciplinessData, loading, refet
 
     // Fetch individual discipline details
     const { data: disciplineDetails, isLoading: isDisciplineLoading, refetch: refetchDiscipline } = useQuery({
-        queryKey: ['discipline', selectedDiscipline],
+        queryKey: ['discipline', editingDisciplineId],
         queryFn: () => {
-            if (!selectedDiscipline) return Promise.resolve(null);
+            if (!editingDisciplineId) return Promise.resolve(null);
             return axios.get(
-                `https://nexus-consults.com/api/public/api/admin/disciplines/${selectedDiscipline}`,
+                `https://nexus-consults.com/api/public/api/admin/disciplines/${editingDisciplineId}`,
                 {
                     headers: {
                         Authorization: `Bearer ${localStorage.getItem('userToken')}`
@@ -82,8 +317,197 @@ export default function DisciplinessDataTable({ disciplinessData, loading, refet
                 }
             ).then(res => res.data.data);
         },
-        enabled: !!selectedDiscipline,
+        enabled: !!editingDisciplineId,
     });
+
+    // -------- Drafts utilities --------
+    const loadDrafts = async () => {
+        try {
+            const list = await localforage.getItem(DRAFTS_STORAGE_KEY);
+            const parsed = Array.isArray(list) ? list : [];
+            setDrafts(parsed);
+
+            const fbRaw = localStorage.getItem(DRAFTS_FALLBACK_KEY);
+            if (fbRaw) {
+                try {
+                    const fb = JSON.parse(fbRaw);
+                    if (fb && typeof fb === 'object') {
+                        upsertDraft(fb);
+                    }
+                } catch (_) { }
+                localStorage.removeItem(DRAFTS_FALLBACK_KEY);
+            }
+        } catch (_) {
+            // ignore
+        }
+    };
+
+    const persistDrafts = async (list) => {
+        try {
+            await localforage.setItem(DRAFTS_STORAGE_KEY, list);
+        } catch (e) {
+            console.error('Persist drafts failed', e);
+            toast.error('Could not save drafts locally');
+        }
+    };
+
+    const upsertDraft = async (draft) => {
+        setDrafts(prev => {
+            const byId = prev.findIndex(d => d.id === draft.id);
+            let next = [...prev];
+            const now = new Date().toISOString();
+            if (byId >= 0) {
+                next[byId] = { ...prev[byId], ...draft, updatedAt: now };
+            } else {
+                const bySlugIdx = draft.slug ? prev.findIndex(d => d.slug === draft.slug && d.slug) : -1;
+                if (bySlugIdx >= 0) {
+                    next[bySlugIdx] = { ...prev[bySlugIdx], ...draft, id: prev[bySlugIdx].id, updatedAt: now };
+                } else {
+                    next.push({ ...draft, updatedAt: now });
+                }
+            }
+
+            if (next.length > 20) {
+                next = next
+                    .slice()
+                    .sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt))
+                    .slice(0, 20);
+            }
+
+            persistDrafts(next);
+            return next;
+        });
+    };
+
+    const deleteDraft = async (id) => {
+        setDrafts(prev => {
+            const next = prev.filter(d => d.id !== id);
+            persistDrafts(next);
+            return next;
+        });
+        if (activeDraftId === id) setActiveDraftId(null);
+    };
+
+    const clearMatchingDraftBySlug = async (slug) => {
+        if (!slug) return;
+        setDrafts(prev => {
+            const next = prev.filter(d => d.slug !== slug);
+            persistDrafts(next);
+            return next;
+        });
+    };
+
+    useEffect(() => {
+        loadDrafts();
+    }, []);
+
+    const makeDraftFromForm = () => {
+        const hasContent = (formData.title && formData.title.trim() !== '') ||
+            (formData.description && formData.description.trim() !== '') ||
+            formData.sections.some(section => section.content && section.content.trim() !== '');
+
+        if (!hasContent) return null;
+
+        let id = activeDraftId;
+        if (!id && formData.slug) {
+            const existing = drafts.find(d => d.slug === formData.slug);
+            if (existing) id = existing.id;
+        }
+
+        const sectionsForDraft = formData.sections.map(section => ({
+            content: section.content || '',
+            caption: section.caption || '',
+            image_meta: section.image ? { name: section.image.name, type: section.image.type, size: section.image.size } : null,
+            existing_image: section.existing_image || null
+        }));
+
+        return {
+            id: id || `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+            title: formData.title,
+            slug: formData.slug,
+            description: formData.description,
+            order: formData.order || 0, // Include order in draft
+            is_active: formData.is_active,
+            show_on_home: formData.show_on_home || false,
+            sections: sectionsForDraft,
+            cover_photo_meta: formData.cover_photo ? { name: formData.cover_photo.name, type: formData.cover_photo.type, size: formData.cover_photo.size } : null,
+        };
+    };
+
+    const saveCurrentAsDraft = () => {
+        const draft = makeDraftFromForm();
+        if (!draft) return;
+        setActiveDraftId(draft.id);
+        upsertDraft(draft);
+        toast.success('Draft saved locally');
+    };
+
+    const resumeDraft = (draft) => {
+        const restoredSections = draft.sections?.map(section => ({
+            id: Date.now() + Math.random(),
+            content: section.content || '',
+            caption: section.caption || '',
+            image: null,
+            existing_image: section.existing_image || null
+        })) || [];
+
+        setFormData({
+            title: draft.title || '',
+            slug: draft.slug || '',
+            description: draft.description || '',
+            order: draft.order || 0, // Restore order from draft
+            is_active: draft.is_active ?? true,
+            show_on_home: draft.show_on_home || false,
+            sections: restoredSections,
+            cover_photo: null,
+        });
+        setIsSlugManuallyEdited(true);
+        setActiveDraftId(draft.id);
+        setShowAddModal(true);
+        toast('Draft loaded');
+    };
+
+    useEffect(() => {
+        if (showAddModal) {
+            addAutoSaveInterval.current = setInterval(() => {
+                const draft = makeDraftFromForm();
+                if (draft) {
+                    const currentContent = JSON.stringify({
+                        title: draft.title,
+                        description: draft.description,
+                        order: draft.order, // Include order in auto-save
+                        sections: draft.sections
+                    });
+
+                    if (currentContent !== lastAutoSaveRef.current) {
+                        setActiveDraftId(prev => prev || draft.id);
+                        upsertDraft(draft);
+                        lastAutoSaveRef.current = currentContent;
+                    }
+                }
+            }, 5000);
+
+            const onBeforeUnload = () => {
+                const draft = makeDraftFromForm();
+                if (draft) {
+                    upsertDraft(draft);
+                    try {
+                        localStorage.setItem(DRAFTS_FALLBACK_KEY, JSON.stringify(draft));
+                    } catch (_) { }
+                }
+            };
+            window.addEventListener('beforeunload', onBeforeUnload);
+
+            return () => {
+                if (addAutoSaveInterval.current) clearInterval(addAutoSaveInterval.current);
+                window.removeEventListener('beforeunload', onBeforeUnload);
+                lastAutoSaveRef.current = '';
+            };
+        } else {
+            if (addAutoSaveInterval.current) clearInterval(addAutoSaveInterval.current);
+            lastAutoSaveRef.current = '';
+        }
+    }, [showAddModal]);
 
     const handleFilterChange = (field, value) => {
         setFilters(prev => ({
@@ -91,6 +515,12 @@ export default function DisciplinessDataTable({ disciplinessData, loading, refet
             [field]: value
         }));
         setCurrentPage(1);
+    };
+
+    const generateSlug = (title) => {
+        return title.toLowerCase()
+            .replace(/[^a-z0-9]+/g, '-')
+            .replace(/(^-|-$)/g, '');
     };
 
     const handleDeleteClick = (disciplineId) => {
@@ -136,100 +566,417 @@ export default function DisciplinessDataTable({ disciplinessData, loading, refet
         setShowDetailsModal(true);
     };
 
-    const handleAddNew = () => {
-        setIsEditing(false);
+    const resetForm = () => {
         setFormData({
             title: '',
+            slug: '',
             description: '',
-            is_active: true
+            order: 0, // Reset order to 0
+            is_active: true,
+            show_on_home: false,
+            cover_photo: null,
+            sections: []
         });
-        setShowAddEditModal(true);
+        setIsSlugManuallyEdited(false);
+    };
+
+    const handleAddNew = () => {
+        resetForm();
+        setShowAddModal(true);
     };
 
     const handleEdit = (discipline) => {
-        setSelectedDiscipline(discipline.id);
-        setIsEditing(true);
-        // Set initial form data immediately from the row data
-        setFormData({
-            title: discipline.title || '',
-            description: discipline.description || '',
-            is_active: discipline.is_active || false
-        });
-        setShowAddEditModal(true);
+        setEditingDisciplineId(discipline.id);
     };
 
-    // Set form data when editing and discipline details are loaded
     useEffect(() => {
-        if (isEditing && disciplineDetails) {
+        if (disciplineDetails && editingDisciplineId) {
+            const sections = disciplineDetails.sections || [];
+            const formattedSections = sections.map((section, index) => ({
+                id: Date.now() + index,
+                content: section.content || '',
+                caption: section.caption || '',
+                image: null,
+                existing_image: section.image || null
+            }));
+
+            setEditFormData({
+                id: disciplineDetails.id,
+                title: disciplineDetails.title,
+                slug: disciplineDetails.slug,
+                description: disciplineDetails.description,
+                order: disciplineDetails.order || 0, // Set order from disciplineDetails
+                is_active: disciplineDetails.is_active,
+                show_on_home: disciplineDetails.show_on_home || false,
+                cover_photo: null,
+                existing_cover_photo: disciplineDetails.cover_photo,
+                sections: formattedSections
+            });
+            setIsEditSlugManuallyEdited(true);
+            setShowEditModal(true);
+        }
+    }, [disciplineDetails, editingDisciplineId]);
+
+    // Dynamic sections handlers for create form
+    const addSection = () => {
+        const newSection = {
+            id: Date.now() + Math.random(),
+            content: '',
+            caption: '',
+            image: null,
+            existing_image: null
+        };
+        setFormData(prev => ({
+            ...prev,
+            sections: [...prev.sections, newSection]
+        }));
+    };
+
+    const removeSection = (sectionId) => {
+        setFormData(prev => ({
+            ...prev,
+            sections: prev.sections.filter(section => section.id !== sectionId)
+        }));
+    };
+
+    const updateSectionContent = (sectionId, content) => {
+        setFormData(prev => ({
+            ...prev,
+            sections: prev.sections.map(section =>
+                section.id === sectionId ? { ...section, content } : section
+            )
+        }));
+    };
+
+    const updateSectionCaption = (sectionId, caption) => {
+        setFormData(prev => ({
+            ...prev,
+            sections: prev.sections.map(section =>
+                section.id === sectionId ? { ...section, caption } : section
+            )
+        }));
+    };
+
+    const updateSectionImage = (sectionId, image) => {
+        setFormData(prev => ({
+            ...prev,
+            sections: prev.sections.map(section =>
+                section.id === sectionId ? { ...section, image } : section
+            )
+        }));
+    };
+
+    const removeSectionImage = (sectionId) => {
+        setFormData(prev => ({
+            ...prev,
+            sections: prev.sections.map(section =>
+                section.id === sectionId ? { ...section, image: null } : section
+            )
+        }));
+    };
+
+    const removeExistingSectionImage = (sectionId) => {
+        setFormData(prev => ({
+            ...prev,
+            sections: prev.sections.map(section =>
+                section.id === sectionId ? { ...section, existing_image: null, image: null } : section
+            )
+        }));
+    };
+
+    // Dynamic sections handlers for edit form
+    const addEditSection = () => {
+        const newSection = {
+            id: Date.now() + Math.random(),
+            content: '',
+            caption: '',
+            image: null,
+            existing_image: null
+        };
+        setEditFormData(prev => ({
+            ...prev,
+            sections: [...prev.sections, newSection]
+        }));
+    };
+
+    const removeEditSection = (sectionId) => {
+        setEditFormData(prev => ({
+            ...prev,
+            sections: prev.sections.filter(section => section.id !== sectionId)
+        }));
+    };
+
+    const updateEditSectionContent = (sectionId, content) => {
+        setEditFormData(prev => ({
+            ...prev,
+            sections: prev.sections.map(section =>
+                section.id === sectionId ? { ...section, content } : section
+            )
+        }));
+    };
+
+    const updateEditSectionCaption = (sectionId, caption) => {
+        setEditFormData(prev => ({
+            ...prev,
+            sections: prev.sections.map(section =>
+                section.id === sectionId ? { ...section, caption } : section
+            )
+        }));
+    };
+
+    const updateEditSectionImage = (sectionId, image) => {
+        setEditFormData(prev => ({
+            ...prev,
+            sections: prev.sections.map(section =>
+                section.id === sectionId ? { ...section, image } : section
+            )
+        }));
+    };
+
+    const removeEditSectionImage = (sectionId) => {
+        setEditFormData(prev => ({
+            ...prev,
+            sections: prev.sections.map(section =>
+                section.id === sectionId ? { ...section, image: null } : section
+            )
+        }));
+    };
+
+    const removeExistingEditSectionImage = (sectionId) => {
+        setEditFormData(prev => ({
+            ...prev,
+            sections: prev.sections.map(section =>
+                section.id === sectionId ? { ...section, existing_image: null, image: null } : section
+            )
+        }));
+    };
+
+    const handleFormChange = (e) => {
+        const { name, value, type, checked, files } = e.target;
+
+        if (type === 'file') {
             setFormData(prev => ({
                 ...prev,
-                title: disciplineDetails.title || prev.title,
-                description: disciplineDetails.description || prev.description,
-                is_active: disciplineDetails.is_active || prev.is_active
+                [name]: files[0]
+            }));
+        } else if (type === 'number') {
+            setFormData(prev => ({
+                ...prev,
+                [name]: parseInt(value) || 0
+            }));
+        } else {
+            setFormData(prev => ({
+                ...prev,
+                [name]: type === 'checkbox' ? checked : value
             }));
         }
-    }, [isEditing, disciplineDetails]);
 
-    const createDisciplineMutation = useMutation({
-        mutationFn: (formData) => {
-            return axios.post(
+        if (name === 'title' && !isSlugManuallyEdited) {
+            const slug = generateSlug(value);
+            setFormData(prev => ({
+                ...prev,
+                slug: slug
+            }));
+        }
+    };
+
+    const handleSlugChange = (e) => {
+        const { value } = e.target;
+        setFormData(prev => ({
+            ...prev,
+            slug: value
+        }));
+        setIsSlugManuallyEdited(true);
+    };
+
+    const handleResetSlug = () => {
+        const slug = generateSlug(formData.title);
+        setFormData(prev => ({
+            ...prev,
+            slug: slug
+        }));
+        setIsSlugManuallyEdited(false);
+    };
+
+    const handleEditFormChange = (e) => {
+        const { name, value, type, checked, files } = e.target;
+
+        if (type === 'file') {
+            setEditFormData(prev => ({
+                ...prev,
+                [name]: files[0]
+            }));
+        } else if (type === 'number') {
+            setEditFormData(prev => ({
+                ...prev,
+                [name]: parseInt(value) || 0
+            }));
+        } else {
+            setEditFormData(prev => ({
+                ...prev,
+                [name]: type === 'checkbox' ? checked : value
+            }));
+        }
+
+        if (name === 'title' && !isEditSlugManuallyEdited) {
+            const slug = generateSlug(value);
+            setEditFormData(prev => ({
+                ...prev,
+                slug: slug
+            }));
+        }
+    };
+
+    const handleEditSlugChange = (e) => {
+        const { value } = e.target;
+        setEditFormData(prev => ({
+            ...prev,
+            slug: value
+        }));
+        setIsEditSlugManuallyEdited(true);
+    };
+
+    const handleEditResetSlug = () => {
+        const slug = generateSlug(editFormData.title);
+        setEditFormData(prev => ({
+            ...prev,
+            slug: slug
+        }));
+        setIsEditSlugManuallyEdited(false);
+    };
+
+    const handleAddDiscipline = async (e) => {
+        e.preventDefault();
+
+        const hasContent = formData.sections.some(section =>
+            section.content && section.content.trim() !== ''
+        );
+
+        if (!hasContent) {
+            toast.error('Please add at least one section with content');
+            return;
+        }
+
+        setUpdatingDiscipline(true);
+        try {
+            const formDataToSend = new FormData();
+            formDataToSend.append('title', formData.title);
+            formDataToSend.append('slug', formData.slug);
+            formDataToSend.append('order', formData.order || 0); // Add order to form data
+            formDataToSend.append('is_active', formData.is_active ? 1 : 0);
+            formDataToSend.append('show_on_home', formData.show_on_home ? 1 : 0);
+            formDataToSend.append('description', formData.description);
+
+            formData.sections.forEach((section, index) => {
+                formDataToSend.append(`content${index + 1}`, section.content || '');
+                formDataToSend.append(`caption${index + 1}`, section.caption || '');
+                if (section.image instanceof File) {
+                    formDataToSend.append(`image${index + 1}`, section.image);
+                }
+            });
+
+            formDataToSend.append('cover_photo', formData.cover_photo || '');
+
+            await axios.post(
                 'https://nexus-consults.com/api/public/api/admin/disciplines',
-                formData,
+                formDataToSend,
                 {
                     headers: {
-                        Authorization: `Bearer ${localStorage.getItem('userToken')}`,
-                        'Content-Type': 'application/json'
+                        'Authorization': `Bearer ${localStorage.getItem('userToken')}`,
+                        'Content-Type': 'multipart/form-data'
                     }
                 }
             );
-        },
-        onSuccess: () => {
-            toast.success('Discipline created successfully');
-            setShowAddEditModal(false);
+            setUpdatingDiscipline(false);
+            toast.success('Discipline added successfully', { duration: 2000 });
+            setShowAddModal(false);
+            resetForm();
             refetch();
-        },
-        onError: (error) => {
-            toast.error(error.response?.data?.message || 'Failed to create discipline');
+            clearMatchingDraftBySlug(formData.slug);
+            setActiveDraftId(null);
+        } catch (error) {
+            setUpdatingDiscipline(false);
+            toast.error(error.response?.data?.message || 'An unexpected error occurred', { duration: 3000 });
             if (error.response?.status == 401) {
                 localStorage.removeItem('userToken')
                 navigate('/login')
             }
             if (error.response?.status == 403) {
-                toast.error('You are not authorized to perform this action')
+                toast.error('You are not authorized to view this page')
+                navigate('/home')
             }
         }
-    });
+    };
 
-    const updateDisciplineMutation = useMutation({
-        mutationFn: ({ disciplineId, formData }) => {
-            return axios.put(
-                `https://nexus-consults.com/api/public/api/admin/disciplines/${disciplineId}`,
-                formData,
+    const handleUpdateDiscipline = async (e) => {
+        e.preventDefault();
+
+        const hasContent = editFormData.sections.some(section =>
+            section.content && section.content.trim() !== ''
+        );
+
+        if (!hasContent) {
+            toast.error('Please add at least one section with content');
+            return;
+        }
+
+        setUpdatingDiscipline(true);
+        try {
+            const formDataToSend = new FormData();
+            formDataToSend.append('title', editFormData.title);
+            formDataToSend.append('slug', editFormData.slug);
+            formDataToSend.append('order', editFormData.order || 0); // Add order to form data
+            formDataToSend.append('is_active', editFormData.is_active ? 1 : 0);
+            formDataToSend.append('show_on_home', editFormData.show_on_home ? 1 : 0);
+            formDataToSend.append('description', editFormData.description);
+            formDataToSend.append('_method', 'POST');
+
+            editFormData.sections.forEach((section, index) => {
+                formDataToSend.append(`content${index + 1}`, section.content || '');
+                formDataToSend.append(`caption${index + 1}`, section.caption || '');
+
+                if (section.image instanceof File) {
+                    formDataToSend.append(`image${index + 1}`, section.image);
+                } else if (section.existing_image === null) {
+                    formDataToSend.append(`image${index + 1}`, '');
+                }
+            });
+
+            if (editFormData.cover_photo instanceof File) {
+                formDataToSend.append('cover_photo', editFormData.cover_photo);
+            } else if (editFormData.existing_cover_photo === null) {
+                formDataToSend.append('cover_photo', '');
+            }
+
+            await axios.post(
+                `https://nexus-consults.com/api/public/api/admin/disciplines/${editFormData.id}`,
+                formDataToSend,
                 {
                     headers: {
-                        Authorization: `Bearer ${localStorage.getItem('userToken')}`,
-                        'Content-Type': 'application/json'
+                        'Authorization': `Bearer ${localStorage.getItem('userToken')}`,
+                        'Content-Type': 'multipart/form-data'
                     }
                 }
             );
-        },
-        onSuccess: () => {
-            toast.success('Discipline updated successfully');
-            setShowAddEditModal(false);
+            setUpdatingDiscipline(false);
+            toast.success('Discipline updated successfully', { duration: 2000 });
+            setShowEditModal(false);
+            setEditingDisciplineId(null);
             refetch();
-            refetchDiscipline();
-        },
-        onError: (error) => {
-            toast.error(error.response?.data?.message || 'Failed to update discipline');
+            queryClient.invalidateQueries(['discipline', editFormData.id]);
+        } catch (error) {
+            setUpdatingDiscipline(false);
+            toast.error(error.response?.data?.message || 'An unexpected error occurred', { duration: 3000 });
             if (error.response?.status == 401) {
                 localStorage.removeItem('userToken')
                 navigate('/login')
             }
             if (error.response?.status == 403) {
-                toast.error('You are not authorized to perform this action')
+                toast.error('You are not authorized to view this page')
+                navigate('/home')
             }
         }
-    });
+    };
 
     const toggleStatusMutation = useMutation({
         mutationFn: (disciplineId) =>
@@ -264,25 +1011,8 @@ export default function DisciplinessDataTable({ disciplinessData, loading, refet
         }
     });
 
-    const handleToggleStatus = (disciplineId, currentStatus) => {
+    const handleToggleStatus = (disciplineId) => {
         toggleStatusMutation.mutate(disciplineId);
-    };
-
-    const handleFormSubmit = (e) => {
-        e.preventDefault();
-        if (!formData.title) {
-            toast.error('Please fill in all required fields');
-            return;
-        }
-
-        if (isEditing) {
-            updateDisciplineMutation.mutate({
-                disciplineId: selectedDiscipline,
-                formData
-            });
-        } else {
-            createDisciplineMutation.mutate(formData);
-        }
     };
 
     // Filter disciplines based on all filter criteria
@@ -302,7 +1032,6 @@ export default function DisciplinessDataTable({ disciplinessData, loading, refet
         const matchesStatus = filters.is_active === '' ||
             discipline.is_active?.toString() === filters.is_active;
 
-        // Date range filter on created_at
         let matchesDate = true;
         if (discipline.created_at) {
             const createdDate = new Date(discipline.created_at);
@@ -368,7 +1097,6 @@ export default function DisciplinessDataTable({ disciplinessData, loading, refet
         );
     };
 
-    // Handle individual discipline selection
     const handleSelectDiscipline = (disciplineId, isSelected) => {
         if (isSelected) {
             setSelectedDiscipliness(prev => [...prev, disciplineId]);
@@ -377,7 +1105,6 @@ export default function DisciplinessDataTable({ disciplinessData, loading, refet
         }
     };
 
-    // Handle select all
     const handleSelectAll = (isSelected) => {
         if (isSelected) {
             setSelectedDiscipliness(filteredDiscipliness.map(discipline => discipline.id));
@@ -388,9 +1115,13 @@ export default function DisciplinessDataTable({ disciplinessData, loading, refet
         }
     };
 
-    // Bulk delete disciplines
     const handleBulkDelete = async () => {
         if (!selectedDiscipliness.length) return;
+        setShowBulkDeleteConfirm(true);
+    };
+
+    const confirmBulkDelete = async () => {
+        setShowBulkDeleteConfirm(false);
 
         try {
             setIsBulkActionLoading(true);
@@ -412,6 +1143,111 @@ export default function DisciplinessDataTable({ disciplinessData, loading, refet
         } finally {
             setIsBulkActionLoading(false);
         }
+    };
+
+    const handleBulkStatusUpdate = async (status) => {
+        if (!selectedDiscipliness.length) return;
+
+        try {
+            setIsBulkActionLoading(true);
+            await axios.post('https://nexus-consults.com/api/public/api/admin/disciplines/bulk/update-status',
+                {
+                    ids: selectedDiscipliness,
+                    status: status
+                },
+                {
+                    headers: {
+                        Authorization: `Bearer ${localStorage.getItem('userToken')}`
+                    }
+                }
+            );
+            toast.success(`Status updated for ${selectedDiscipliness.length} discipline(s)`);
+            setSelectedDiscipliness([]);
+            setSelectAll(false);
+            refetch();
+        } catch (error) {
+            console.error('Error updating discipline status:', error);
+            toast.error(error.response?.data?.message || 'Failed to update discipline status');
+        } finally {
+            setIsBulkActionLoading(false);
+        }
+    };
+
+    // Render section components
+    const renderCreateSections = () => {
+        return formData.sections.map((section, index) => (
+            <div key={section.id} className="p-4 border rounded-lg mb-4">
+                <div className="flex justify-between items-center mb-4">
+                    <h3 className="text-lg font-medium">Section {index + 1}</h3>
+                    <button
+                        type="button"
+                        onClick={() => removeSection(section.id)}
+                        className="text-red-500 hover:text-red-700 p-1"
+                        disabled={formData.sections.length === 1}
+                    >
+                        <FaTrash size={16} />
+                    </button>
+                </div>
+                <div className="mb-4">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Content {index + 1}*
+                    </label>
+                    <TiptapWithImg
+                        content={section.content}
+                        onUpdate={(content) => updateSectionContent(section.id, content)}
+                    />
+                </div>
+                <SectionImageUpload
+                    sectionId={section.id}
+                    label={`Image ${index + 1}`}
+                    existingImage={section.existing_image}
+                    currentImage={section.image}
+                    caption={section.caption}
+                    onImageChange={updateSectionImage}
+                    onRemoveImage={removeSectionImage}
+                    onRemoveExistingImage={removeExistingSectionImage}
+                    onCaptionChange={updateSectionCaption}
+                />
+            </div>
+        ));
+    };
+
+    const renderEditSections = () => {
+        return editFormData.sections.map((section, index) => (
+            <div key={section.id} className="p-4 border rounded-lg mb-4">
+                <div className="flex justify-between items-center mb-4">
+                    <h3 className="text-lg font-medium">Section {index + 1}</h3>
+                    <button
+                        type="button"
+                        onClick={() => removeEditSection(section.id)}
+                        className="text-red-500 hover:text-red-700 p-1"
+                        disabled={editFormData.sections.length === 1}
+                    >
+                        <FaTrash size={16} />
+                    </button>
+                </div>
+                <div className="mb-4">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Content {index + 1}*
+                    </label>
+                    <TiptapWithImg
+                        content={section.content}
+                        onUpdate={(content) => updateEditSectionContent(section.id, content)}
+                    />
+                </div>
+                <SectionImageUpload
+                    sectionId={section.id}
+                    label={`Image ${index + 1}`}
+                    existingImage={section.existing_image}
+                    currentImage={section.image}
+                    caption={section.caption}
+                    onImageChange={updateEditSectionImage}
+                    onRemoveImage={removeEditSectionImage}
+                    onRemoveExistingImage={removeExistingEditSectionImage}
+                    onCaptionChange={updateEditSectionCaption}
+                />
+            </div>
+        ));
     };
 
     return (
@@ -456,6 +1292,12 @@ export default function DisciplinessDataTable({ disciplinessData, loading, refet
                                 </div>
                             </th>
                             <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Cover Photo
+                            </th>
+                            <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Order
+                            </th>
+                            <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                 <select
                                     value={filters.is_active}
                                     onChange={(e) => handleFilterChange('is_active', e.target.value)}
@@ -486,7 +1328,7 @@ export default function DisciplinessDataTable({ disciplinessData, loading, refet
                     <tbody className="bg-white divide-y divide-gray-200 text-sm">
                         {loading ? (
                             <tr>
-                                <td colSpan="5" className="px-3 py-4 text-center">
+                                <td colSpan="7" className="px-3 py-4 text-center">
                                     <div className="flex justify-center items-center gap-2">
                                         <FaSpinner className="animate-spin" size={18} />
                                         Loading disciplines...
@@ -495,7 +1337,7 @@ export default function DisciplinessDataTable({ disciplinessData, loading, refet
                             </tr>
                         ) : paginatedDiscipliness.length === 0 ? (
                             <tr>
-                                <td colSpan="5" className="px-3 py-4 text-center">
+                                <td colSpan="7" className="px-3 py-4 text-center">
                                     No disciplines found
                                 </td>
                             </tr>
@@ -520,6 +1362,20 @@ export default function DisciplinessDataTable({ disciplinessData, loading, refet
                                                     </div>
                                                 )}
                                             </div>
+                                        </div>
+                                    </td>
+                                    <td className="px-3 py-4 whitespace-nowrap">
+                                        {discipline.cover_photo && (
+                                            <img
+                                                src={discipline.cover_photo}
+                                                alt="Cover"
+                                                className="h-10 w-10 object-cover rounded"
+                                            />
+                                        )}
+                                    </td>
+                                    <td className="px-3 py-4 whitespace-nowrap">
+                                        <div className="text-sm text-gray-900">
+                                            {discipline.order || 0}
                                         </div>
                                     </td>
                                     <td className="px-3 py-4 whitespace-nowrap">
@@ -551,13 +1407,18 @@ export default function DisciplinessDataTable({ disciplinessData, loading, refet
                                                         className="text-purple-500 hover:text-purple-700 p-1"
                                                         onClick={() => handleEdit(discipline)}
                                                         title="Edit"
+                                                        disabled={isDisciplineLoading}
                                                     >
-                                                        <FaEdit size={16} />
+                                                        {isDisciplineLoading && editingDisciplineId === discipline.id ? (
+                                                            <FaSpinner className="animate-spin" size={16} />
+                                                        ) : (
+                                                            <FaEdit size={16} />
+                                                        )}
                                                     </button>
 
                                                     <button
                                                         className={`${!discipline.is_active ? 'text-red-500 hover:text-red-700' : 'text-green-500 hover:text-green-700'} p-1`}
-                                                        onClick={() => handleToggleStatus(discipline.id, discipline.is_active)}
+                                                        onClick={() => handleToggleStatus(discipline.id)}
                                                         disabled={togglingDisciplineId === discipline.id}
                                                         title={discipline.is_active ? "Deactivate" : "Activate"}
                                                     >
@@ -593,6 +1454,58 @@ export default function DisciplinessDataTable({ disciplinessData, loading, refet
                 </table>
             </div>
 
+            {/* Bulk Delete Confirmation Modal */}
+            {showBulkDeleteConfirm && (
+                <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+                    <motion.div
+                        initial={{ scale: 0.9, opacity: 0 }}
+                        animate={{ scale: 1, opacity: 1 }}
+                        exit={{ scale: 0.9, opacity: 0 }}
+                        transition={{ duration: 0.2 }}
+                        className="bg-white rounded-lg p-6 max-w-md w-full">
+                        <div className="flex justify-between items-center mb-4">
+                            <h3 className="text-lg font-semibold text-gray-900">Confirm Deletion</h3>
+                            <button
+                                onClick={() => setShowBulkDeleteConfirm(false)}
+                                className="text-gray-500 hover:text-gray-700"
+                            >
+                                <FaTimes />
+                            </button>
+                        </div>
+                        <p className="text-gray-700 mb-6">
+                            Are you sure you want to delete {selectedDiscipliness.length} selected discipline(s)? This action cannot be undone.
+                        </p>
+                        <div className="flex justify-end gap-3">
+                            <button
+                                onClick={() => setShowBulkDeleteConfirm(false)}
+                                className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                                disabled={isBulkActionLoading}
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={confirmBulkDelete}
+                                className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 flex items-center"
+                                disabled={isBulkActionLoading}
+                            >
+                                {isBulkActionLoading ? (
+                                    <>
+                                        <FaSpinner className="animate-spin mr-2" />
+                                        Deleting...
+                                    </>
+                                ) : (
+                                    'Delete'
+                                )}
+                            </button>
+                        </div>
+                    </motion.div>
+                </motion.div>
+            )}
+
             {/* Bulk Actions Toolbar */}
             {selectedDiscipliness.length > 0 && (
                 <div className="bg-blue-50 p-4 rounded-md mb-6 border border-blue-200">
@@ -602,12 +1515,28 @@ export default function DisciplinessDataTable({ disciplinessData, loading, refet
                         </div>
                         <div className="flex flex-wrap gap-2">
                             <button
+                                onClick={() => handleBulkStatusUpdate(true)}
+                                disabled={isBulkActionLoading}
+                                className="flex items-center px-3 py-1.5 bg-green-600 text-white rounded hover:bg-green-700 disabled:opacity-50 text-sm"
+                            >
+                                <FaCheck className="mr-1.5" />
+                                Activate
+                            </button>
+                            <button
+                                onClick={() => handleBulkStatusUpdate(false)}
+                                disabled={isBulkActionLoading}
+                                className="flex items-center px-3 py-1.5 bg-yellow-600 text-white rounded hover:bg-yellow-700 disabled:opacity-50 text-sm"
+                            >
+                                <FaTimes className="mr-1.5" />
+                                Deactivate
+                            </button>
+                            <button
                                 onClick={handleBulkDelete}
                                 disabled={isBulkActionLoading}
                                 className="flex items-center px-3 py-1.5 bg-red-600 text-white rounded hover:bg-red-700 disabled:opacity-50 text-sm"
                             >
                                 <FaTrashAlt className="mr-1.5" />
-                                Delete Selected
+                                Delete
                             </button>
                             <button
                                 onClick={() => {
@@ -634,180 +1563,500 @@ export default function DisciplinessDataTable({ disciplinessData, loading, refet
             {/* Pagination */}
             {!loading && renderPagination()}
 
-            {/* Discipline Details Modal */}
-            {showDetailsModal && (
-                <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
-                    onClick={() => setShowDetailsModal(false)}
-                >
-                    <motion.div
-                        initial={{ scale: 0.9, opacity: 0 }}
-                        animate={{ scale: 1, opacity: 1 }}
-                        exit={{ scale: 0.9, opacity: 0 }}
-                        className="bg-white rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto"
-                        onClick={(e) => e.stopPropagation()}
-                    >
-                        <div className="p-6">
-                            <div className="flex justify-between items-center mb-4">
-                                <h3 className="text-xl font-bold text-gray-900">Discipline Details</h3>
-                                <button
-                                    onClick={() => setShowDetailsModal(false)}
-                                    className="text-gray-500 hover:text-gray-700"
-                                >
-                                    <FaTimes size={20} />
-                                </button>
-                            </div>
-
-                            {selectedDiscipline ? (
-                                <div className="space-y-6">
-                                    {/* Information */}
-                                    <div className="grid grid-cols-1 gap-4">
-                                        <div>
-                                            <label className="block text-sm font-medium text-gray-700">Title</label>
-                                            <p className="mt-1 text-lg font-semibold text-gray-900">{selectedDiscipline.title}</p>
-                                        </div>
-                                        <div>
-                                            <label className="block text-sm font-medium text-gray-700">Description</label>
-                                            <p className="mt-1 text-sm text-gray-900">
-                                                {selectedDiscipline.description || 'No description provided'}
-                                            </p>
-                                        </div>
-                                        <div className="grid grid-cols-2 gap-4">
-                                            <div>
-                                                <label className="block text-sm font-medium text-gray-700">Status</label>
-                                                <div className="mt-1">
-                                                    {statusBadge(selectedDiscipline.is_active)}
+            {/* Drafts Table */}
+            <div className="p-4 border-t">
+                <div className="flex items-center justify-between mb-3">
+                    <h2 className="text-lg font-semibold">Drafts</h2>
+                    <div className="text-xs text-gray-500">Drafts are stored locally in your browser</div>
+                </div>
+                {drafts.length === 0 ? (
+                    <div className="text-sm text-gray-500">No drafts yet</div>
+                ) : (
+                    <div className="overflow-x-auto">
+                        <table className="w-full divide-y divide-gray-200 text-sm">
+                            <thead className="bg-gray-50">
+                                <tr>
+                                    <th className="px-4 py-2 text-left">Title</th>
+                                    <th className="px-4 py-2 text-left">Updated</th>
+                                    <th className="px-4 py-2 text-left">Note</th>
+                                    <th className="px-4 py-2 text-left">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-gray-200">
+                                {drafts
+                                    .slice()
+                                    .sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt))
+                                    .map(d => (
+                                        <tr key={d.id} className="hover:bg-gray-50">
+                                            <td className="px-4 py-2">{d.title || <span className="italic text-gray-400">Untitled</span>}</td>
+                                            <td className="px-4 py-2">{new Date(d.updatedAt).toLocaleString()}</td>
+                                            <td className="px-4 py-2 text-xs text-gray-500">
+                                                {d.cover_photo_meta ? `Attachment: ${d.cover_photo_meta.name} (re-attach required)` : 'No attachment'}
+                                            </td>
+                                            <td className="px-4 py-2">
+                                                <div className="flex gap-2">
+                                                    <button
+                                                        className="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 flex items-center gap-1"
+                                                        onClick={() => resumeDraft(d)}
+                                                    >
+                                                        <FaFolderOpen /> Resume
+                                                    </button>
+                                                    <button
+                                                        className="px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700"
+                                                        onClick={() => deleteDraft(d.id)}
+                                                    >
+                                                        Delete
+                                                    </button>
                                                 </div>
-                                            </div>
-                                            <div>
-                                                <label className="block text-sm font-medium text-gray-700">Created By</label>
-                                                <p className="mt-1 text-sm text-gray-900">
-                                                    {selectedDiscipline.created_by || '-'}
-                                                </p>
-                                            </div>
-                                        </div>
-                                        <div className="grid grid-cols-2 gap-4">
-                                            <div>
-                                                <label className="block text-sm font-medium text-gray-700">Created On</label>
-                                                <p className="mt-1 text-sm text-gray-900">
-                                                    {new Date(selectedDiscipline.created_at).toLocaleString()}
-                                                </p>
-                                            </div>
-                                            <div>
-                                                <label className="block text-sm font-medium text-gray-700">Last Updated</label>
-                                                <p className="mt-1 text-sm text-gray-900">
-                                                    {new Date(selectedDiscipline.updated_at).toLocaleString()}
-                                                </p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            ) : (
-                                <div className="text-center py-8 text-gray-500">
-                                    Failed to load discipline details
-                                </div>
-                            )}
-                        </div>
-                    </motion.div>
-                </motion.div>
-            )}
+                                            </td>
+                                        </tr>
+                                    ))}
+                            </tbody>
+                        </table>
+                    </div>
+                )}
+            </div>
 
-            {/* Add/Edit Discipline Modal */}
-            {showAddEditModal && (
+            {/* Add Discipline Modal */}
+            {showAddModal && (
                 <motion.div
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
-                    className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+                    className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 "
                 >
                     <button onClick={() => {
-                        setShowAddEditModal(false);
+                        setShowAddModal(false);
+                        const draft = makeDraftFromForm();
+                        if (draft) upsertDraft(draft);
                     }} className='fixed top-5 right-5 text-red-500 backdrop-blur-lg rounded-full z-50' >
                         <XCircle className='' size={40} />
                     </button>
                     <motion.div
-                        initial={{ scale: 0.9, opacity: 0 }}
-                        animate={{ scale: 1, opacity: 1 }}
-                        exit={{ scale: 0.9, opacity: 0 }}
-                        className="bg-white rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto"
+                        initial={{ y: -50, opacity: 0 }}
+                        animate={{ y: 0, opacity: 1 }}
+                        exit={{ y: 50, opacity: 0 }}
+                        className="bg-white rounded-lg shadow-xl w-4/5 h-[90vh] overflow-y-auto"
                         onClick={(e) => e.stopPropagation()}
                     >
                         <div className="p-6">
-                            <div className="flex justify-between items-center mb-4">
-                                <h3 className="text-xl font-bold text-gray-900">
-                                    {isEditing ? 'Edit Discipline' : 'Add New Discipline'}
-                                </h3>
-                                <button
-                                    onClick={() => setShowAddEditModal(false)}
-                                    className="text-gray-500 hover:text-gray-700"
-                                >
-                                    <FaTimes size={20} />
-                                </button>
-                            </div>
-
-                            <form onSubmit={handleFormSubmit}>
-                                <div className="grid grid-cols-1 gap-4 mb-4">
-                                    {/* Title */}
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                                            Title *
-                                        </label>
+                            <h2 className="text-xl font-bold mb-4">Add New Discipline</h2>
+                            <form onSubmit={handleAddDiscipline}>
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                                    <div className='md:col-span-2' >
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Title*</label>
                                         <input
                                             type="text"
+                                            name="title"
                                             value={formData.title}
-                                            onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
-                                            className="w-full px-3 py-2 border rounded-md focus:outline-primary"
-                                            placeholder="Enter discipline title"
+                                            onChange={handleFormChange}
+                                            className="w-full px-3 py-2 border rounded-md"
                                             required
                                         />
                                     </div>
-
-                                    {/* Description */}
                                     <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                                            Description
-                                        </label>
-                                        <textarea
-                                            value={formData.description}
-                                            onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-                                            className="w-full px-3 py-2 border rounded-md focus:outline-primary"
-                                            placeholder="Enter discipline description"
-                                            rows={4}
-                                        />
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Order</label>
+                                        <div className="relative">
+                                            <input
+                                                type="number"
+                                                name="order"
+                                                value={formData.order}
+                                                onChange={handleFormChange}
+                                                min="0"
+                                                step="1"
+                                                className="w-full px-3 py-2 border rounded-md pl-10"
+                                                placeholder="0"
+                                            />
+                                            <FaSortNumericUp className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={16} />
+                                        </div>
                                         <p className="text-xs text-gray-500 mt-1">
-                                            Provide a detailed description of the discipline (optional)
+                                            Lower numbers appear first
                                         </p>
                                     </div>
-
                                 </div>
 
-                                <div className="flex justify-end gap-3">
+                                <div className="mb-4">
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Slug*</label>
+                                    <div className="relative">
+                                        <input
+                                            type="text"
+                                            name="slug"
+                                            value={formData.slug}
+                                            onChange={handleSlugChange}
+                                            className="w-full px-3 py-2 border rounded-md"
+                                            required
+                                        />
+                                        {isSlugManuallyEdited && (
+                                            <button
+                                                type="button"
+                                                onClick={handleResetSlug}
+                                                className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                                                title="Reset to auto-generated slug"
+                                            >
+                                                <FaTimes />
+                                            </button>
+                                        )}
+                                    </div>
+                                    <p className="text-xs text-gray-500 mt-1">
+                                        {isSlugManuallyEdited ?
+                                            "Slug is manually edited. Click the X to reset to auto-generated." :
+                                            "Slug is auto-generated from title. You can edit it manually."}
+                                    </p>
+                                </div>
+
+                                <div className="mb-4">
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                                    <textarea
+                                        name="description"
+                                        value={formData.description}
+                                        onChange={handleFormChange}
+                                        rows={3}
+                                        className="w-full px-3 py-2 border rounded-md resize-vertical"
+                                        placeholder="Enter discipline description..."
+                                    />
+                                </div>
+
+                                {/* Cover Photo Upload */}
+                                <ImageUpload
+                                    name="cover_photo"
+                                    label="Cover Photo"
+                                    currentImage={formData.cover_photo}
+                                    onImageChange={handleFormChange}
+                                    onRemoveImage={(name) => setFormData(prev => ({ ...prev, [name]: null }))}
+                                />
+
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                                    <div className="flex items-center">
+                                        <input
+                                            type="checkbox"
+                                            id="is_active"
+                                            name="is_active"
+                                            checked={formData.is_active}
+                                            onChange={handleFormChange}
+                                            className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                                        />
+                                        <label htmlFor="is_active" className="ml-2 text-sm text-gray-700">
+                                            Active
+                                        </label>
+                                    </div>
+
+                                    <div className="flex items-center">
+                                        <input
+                                            type="checkbox"
+                                            id="show_on_home"
+                                            name="show_on_home"
+                                            checked={formData.show_on_home}
+                                            onChange={handleFormChange}
+                                            className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                                        />
+                                        <label htmlFor="show_on_home" className="ml-2 text-sm text-gray-700">
+                                            Show on Home Screen
+                                        </label>
+                                    </div>
+                                </div>
+
+                                {/* Dynamic Sections */}
+                                <div className="mb-6">
+                                    <div className="space-y-4">
+                                        {formData.sections.length === 0 ? (
+                                            <div className="text-center p-8 border-2 border-dashed rounded-lg">
+                                                <p className="text-gray-500 mb-4">No sections added yet. Click "Add Section" to get started.</p>
+                                                <p className="text-sm text-gray-400">Note: At least one section with content is required.</p>
+                                            </div>
+                                        ) : (
+                                            renderCreateSections()
+                                        )}
+                                    </div>
+                                    <div className="flex justify-between items-center mb-4">
+                                        <h3 className="text-lg font-medium">Sections</h3>
+                                        <button
+                                            type="button"
+                                            onClick={addSection}
+                                            className="bg-primary hover:bg-darkBlue text-white px-3 py-2 rounded-md flex items-center gap-2"
+                                        >
+                                            <FaPlus /> Add Section
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div className="flex justify-end gap-3 mt-6">
+                                    <div className="text-xs text-gray-500 mt-2 flex items-center">
+                                        <FaSpinner className={`animate-spin mr-1 ${updatingDiscipline ? 'opacity-100' : 'opacity-0'}`} size={12} />
+                                        Auto-saves to drafts every 5s
+                                    </div>
                                     <button
                                         type="button"
-                                        onClick={() => setShowAddEditModal(false)}
+                                        onClick={saveCurrentAsDraft}
+                                        className="px-4 py-2 border rounded-md text-gray-700 hover:bg-gray-50 flex items-center gap-2"
+                                    >
+                                        <FaSave size={16} /> Save as Draft
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            const draft = makeDraftFromForm();
+                                            if (draft) upsertDraft(draft);
+                                            setShowAddModal(false);
+                                            resetForm();
+                                        }}
                                         className="px-4 py-2 border rounded-md text-gray-700 hover:bg-gray-50"
                                     >
                                         Cancel
                                     </button>
                                     <button
                                         type="submit"
-                                        disabled={createDisciplineMutation.isPending || updateDisciplineMutation.isPending}
-                                        className="px-4 py-2 bg-primary text-white rounded-md hover:bg-darkBlue transition-all flex items-center gap-2 disabled:opacity-50"
+                                        className="px-4 py-2 bg-primary text-white rounded-md hover:bg-darkBlue transition-all flex items-center justify-center gap-2"
+                                        disabled={updatingDiscipline}
                                     >
-                                        {(createDisciplineMutation.isPending || updateDisciplineMutation.isPending) ? (
+                                        {updatingDiscipline ? (
                                             <>
-                                                <FaSpinner className="animate-spin" />
-                                                {isEditing ? 'Updating...' : 'Creating...'}
+                                                <FaSpinner className="animate-spin" size={18} />
+                                                <span>Adding...</span>
                                             </>
                                         ) : (
-                                            isEditing ? 'Update Discipline' : 'Create Discipline'
+                                            <>
+                                                <FaPlus size={18} />
+                                                <span>Add Discipline</span>
+                                            </>
                                         )}
                                     </button>
                                 </div>
                             </form>
+                        </div>
+                    </motion.div>
+                </motion.div>
+            )}
+
+            {/* Edit Discipline Modal */}
+            {showEditModal && (
+                <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+                >
+                    <button onClick={() => {
+                        setShowEditModal(false);
+                        setEditingDisciplineId(null);
+                    }} className='fixed top-5 right-5 text-red-500 backdrop-blur-lg rounded-full z-50' >
+                        <XCircle className='' size={40} />
+                    </button>
+                    <motion.div
+                        initial={{ y: -50, opacity: 0 }}
+                        animate={{ y: 0, opacity: 1 }}
+                        exit={{ y: 50, opacity: 0 }}
+                        className="bg-white rounded-lg shadow-xl w-4/5 h-[90vh] overflow-y-auto"
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <div className="p-6">
+                            <div className="flex items-center mb-4">
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setShowEditModal(false);
+                                        setEditingDisciplineId(null);
+                                    }}
+                                    className="text-blue-600 hover:text-blue-800 font-medium"
+                                >
+                                    Disciplines
+                                </button>
+                                <span className="mx-2 text-gray-400">{'>'}</span>
+                                <span className="text-xl font-bold text-gray-900">
+                                    {editFormData.title || 'Untitled Discipline'}
+                                </span>
+                                {isDisciplineLoading && (
+                                    <div className="ml-4 flex items-center text-sm text-gray-500">
+                                        <FaSpinner className="animate-spin mr-2" size={14} />
+                                        Loading discipline data...
+                                    </div>
+                                )}
+                            </div>
+
+                            {isDisciplineLoading ? (
+                                <div className="flex justify-center items-center py-8">
+                                    <FaSpinner className="animate-spin mr-2" size={24} />
+                                    <span>Loading discipline data...</span>
+                                </div>
+                            ) : (
+                                <form onSubmit={handleUpdateDiscipline}>
+                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-1">Title*</label>
+                                            <input
+                                                type="text"
+                                                name="title"
+                                                value={editFormData.title}
+                                                onChange={handleEditFormChange}
+                                                className="w-full px-3 py-2 border rounded-md"
+                                                required
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-1">Order</label>
+                                            <div className="relative">
+                                                <input
+                                                    type="number"
+                                                    name="order"
+                                                    value={editFormData.order}
+                                                    onChange={handleEditFormChange}
+                                                    min="0"
+                                                    step="1"
+                                                    className="w-full px-3 py-2 border rounded-md pl-10"
+                                                    placeholder="0"
+                                                />
+                                                <FaSortNumericUp className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={16} />
+                                            </div>
+                                            <p className="text-xs text-gray-500 mt-1">
+                                                Lower numbers appear first
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    <div className="mb-4">
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Slug*</label>
+                                        <div className="relative">
+                                            <input
+                                                type="text"
+                                                name="slug"
+                                                value={editFormData.slug}
+                                                onChange={handleEditSlugChange}
+                                                className="w-full px-3 py-2 border rounded-md"
+                                                required
+                                            />
+                                            {isEditSlugManuallyEdited && (
+                                                <button
+                                                    type="button"
+                                                    onClick={handleEditResetSlug}
+                                                    className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                                                    title="Reset to auto-generated slug"
+                                                >
+                                                    <FaTimes />
+                                                </button>
+                                            )}
+                                        </div>
+                                        <p className="text-xs text-gray-500 mt-1">
+                                            {isEditSlugManuallyEdited ?
+                                                "Slug is manually edited. Click the X to reset to auto-generated." :
+                                                "Slug is auto-generated from title. You can edit it manually."}
+                                        </p>
+                                    </div>
+
+                                    <div className="mb-4">
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                                        <textarea
+                                            name="description"
+                                            value={editFormData.description}
+                                            onChange={handleEditFormChange}
+                                            rows={3}
+                                            className="w-full px-3 py-2 border rounded-md resize-vertical"
+                                            placeholder="Enter discipline description..."
+                                        />
+                                    </div>
+
+                                    {/* Cover Photo Upload */}
+                                    <ImageUpload
+                                        name="cover_photo"
+                                        label="Cover Photo"
+                                        existingImage={editFormData.existing_cover_photo}
+                                        currentImage={editFormData.cover_photo}
+                                        onImageChange={handleEditFormChange}
+                                        onRemoveImage={(name) => {
+                                            if (name.startsWith('existing_')) {
+                                                const fieldName = name.replace('existing_', '');
+                                                setEditFormData(prev => ({ ...prev, [name]: null, [fieldName]: null }));
+                                            } else {
+                                                setEditFormData(prev => ({ ...prev, [name]: null }));
+                                            }
+                                        }}
+                                    />
+
+                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                                        <div className="flex items-center">
+                                            <input
+                                                type="checkbox"
+                                                id="edit_is_active"
+                                                name="is_active"
+                                                checked={editFormData.is_active}
+                                                onChange={handleEditFormChange}
+                                                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                                            />
+                                            <label htmlFor="edit_is_active" className="ml-2 text-sm text-gray-700">
+                                                Active
+                                            </label>
+                                        </div>
+
+                                        <div className="flex items-center">
+                                            <input
+                                                type="checkbox"
+                                                id="edit_show_on_home"
+                                                name="show_on_home"
+                                                checked={editFormData.show_on_home}
+                                                onChange={handleEditFormChange}
+                                                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                                            />
+                                            <label htmlFor="edit_show_on_home" className="ml-2 text-sm text-gray-700">
+                                                Show on Home Screen
+                                            </label>
+                                        </div>
+                                    </div>
+
+                                    {/* Dynamic Sections for Edit */}
+                                    <div className="mb-6">
+                                        <div className="flex justify-between items-center mb-4">
+                                            <h3 className="text-lg font-medium">Sections</h3>
+                                        </div>
+                                        <div className="space-y-4">
+                                            {editFormData.sections.length === 0 ? (
+                                                <div className="text-center p-8 border-2 border-dashed rounded-lg">
+                                                    <p className="text-gray-500 mb-4">No sections added yet. Click "Add Section" to get started.</p>
+                                                    <p className="text-sm text-gray-400">Note: At least one section with content is required.</p>
+                                                </div>
+                                            ) : (
+                                                renderEditSections()
+                                            )}
+                                        </div>
+                                        <div className="flex justify-end items-center mb-4">
+                                            <button
+                                                type="button"
+                                                onClick={addEditSection}
+                                                className="bg-primary hover:bg-darkBlue text-white px-3 py-2 rounded-md flex items-center gap-2"
+                                            >
+                                                <FaPlus /> Add Section
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex justify-end gap-3 mt-6">
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                setShowEditModal(false);
+                                                setEditingDisciplineId(null);
+                                            }}
+                                            className="px-4 py-2 border rounded-md text-gray-700 hover:bg-gray-50"
+                                        >
+                                            Cancel
+                                        </button>
+                                        <button
+                                            type="submit"
+                                            className="px-4 py-2 bg-primary text-white rounded-md hover:bg-darkBlue transition-all flex items-center justify-center gap-2"
+                                            disabled={updatingDiscipline}
+                                        >
+                                            {updatingDiscipline ? (
+                                                <>
+                                                    <FaSpinner className="animate-spin" size={18} />
+                                                    <span>Updating...</span>
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <FaCheck size={18} />
+                                                    <span>Update Discipline</span>
+                                                </>
+                                            )}
+                                        </button>
+                                    </div>
+                                </form>
+                            )}
                         </div>
                     </motion.div>
                 </motion.div>
@@ -859,6 +2108,110 @@ export default function DisciplinessDataTable({ disciplinessData, loading, refet
                                     Delete
                                 </button>
                             </div>
+                        </div>
+                    </motion.div>
+                </motion.div>
+            )}
+
+            {/* Discipline Details Modal */}
+            {showDetailsModal && (
+                <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+                    onClick={() => setShowDetailsModal(false)}
+                >
+                    <motion.div
+                        initial={{ scale: 0.9, opacity: 0 }}
+                        animate={{ scale: 1, opacity: 1 }}
+                        exit={{ scale: 0.9, opacity: 0 }}
+                        className="bg-white rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto"
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <div className="p-6">
+                            <div className="flex justify-between items-center mb-4">
+                                <h3 className="text-xl font-bold text-gray-900">Discipline Details</h3>
+                                <button
+                                    onClick={() => setShowDetailsModal(false)}
+                                    className="text-gray-500 hover:text-gray-700"
+                                >
+                                    <FaTimes size={20} />
+                                </button>
+                            </div>
+
+                            {selectedDiscipline ? (
+                                <div className="space-y-6">
+                                    <div className="grid grid-cols-1 gap-4">
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700">Title</label>
+                                            <p className="mt-1 text-lg font-semibold text-gray-900">{selectedDiscipline.title}</p>
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700">Description</label>
+                                            <p className="mt-1 text-sm text-gray-900">
+                                                {selectedDiscipline.description || 'No description provided'}
+                                            </p>
+                                        </div>
+                                        {selectedDiscipline.cover_photo && (
+                                            <div>
+                                                <label className="block text-sm font-medium text-gray-700">Cover Photo</label>
+                                                <img
+                                                    src={selectedDiscipline.cover_photo}
+                                                    alt="Cover"
+                                                    className="mt-1 h-48 w-full object-cover rounded-lg"
+                                                />
+                                            </div>
+                                        )}
+                                        <div className="grid grid-cols-3 gap-4">
+                                            <div>
+                                                <label className="block text-sm font-medium text-gray-700">Order</label>
+                                                <p className="mt-1 text-sm text-gray-900">
+                                                    {selectedDiscipline.order || 0}
+                                                </p>
+                                            </div>
+                                            <div>
+                                                <label className="block text-sm font-medium text-gray-700">Status</label>
+                                                <div className="mt-1">
+                                                    {statusBadge(selectedDiscipline.is_active)}
+                                                </div>
+                                            </div>
+                                            <div>
+                                                <label className="block text-sm font-medium text-gray-700">Show on Home</label>
+                                                <p className="mt-1 text-sm text-gray-900">
+                                                    {selectedDiscipline.show_on_home ? 'Yes' : 'No'}
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div>
+                                                <label className="block text-sm font-medium text-gray-700">Created By</label>
+                                                <p className="mt-1 text-sm text-gray-900">
+                                                    {selectedDiscipline.created_by || '-'}
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div>
+                                                <label className="block text-sm font-medium text-gray-700">Created On</label>
+                                                <p className="mt-1 text-sm text-gray-900">
+                                                    {new Date(selectedDiscipline.created_at).toLocaleString()}
+                                                </p>
+                                            </div>
+                                            <div>
+                                                <label className="block text-sm font-medium text-gray-700">Last Updated</label>
+                                                <p className="mt-1 text-sm text-gray-900">
+                                                    {new Date(selectedDiscipline.updated_at).toLocaleString()}
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            ) : (
+                                <div className="text-center py-8 text-gray-500">
+                                    Failed to load discipline details
+                                </div>
+                            )}
                         </div>
                     </motion.div>
                 </motion.div>
