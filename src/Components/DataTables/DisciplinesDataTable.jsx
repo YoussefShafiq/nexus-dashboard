@@ -929,7 +929,7 @@ export default function DisciplinessDataTable({ disciplinessData, loading, refet
             formDataToSend.append('is_active', editFormData.is_active ? 1 : 0);
             formDataToSend.append('show_on_home', editFormData.show_on_home ? 1 : 0);
             formDataToSend.append('description', editFormData.description);
-            formDataToSend.append('_method', 'POST');
+            formDataToSend.append('_method', 'PUT');
 
             editFormData.sections.forEach((section, index) => {
                 formDataToSend.append(`content${index + 1}`, section.content || '');
