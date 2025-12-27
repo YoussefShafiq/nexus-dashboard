@@ -22,7 +22,9 @@ import {
     FaSave,
     FaFolderOpen,
     FaTrash,
-    FaFilter
+    FaFilter,
+    FaSortNumericUp,
+    FaSortNumericDown
 } from 'react-icons/fa';
 import TiptapWithImg from '../TextEditor/TiptapWithImg';
 import DateRangePicker from '../ReusableComponents/DateRangePicker';
@@ -162,6 +164,7 @@ export default function ServicesDataTable({ services, disciplinesData, loading, 
         status: '',
         author: '',
         discipline: '', // ADDED: Discipline filter
+        order: '', // ADDED: Order filter
         created_from: '', // YYYY-MM-DD
         created_to: '' // YYYY-MM-DD
     });
@@ -177,6 +180,10 @@ export default function ServicesDataTable({ services, disciplinesData, loading, 
     const [isSlugManuallyEdited, setIsSlugManuallyEdited] = useState(false);
     const [isEditSlugManuallyEdited, setIsEditSlugManuallyEdited] = useState(false);
     const [editingServiceId, setEditingServiceId] = useState(null);
+    const [sortConfig, setSortConfig] = useState({
+        key: 'order',
+        direction: 'ascending'
+    });
 
     const DRAFTS_STORAGE_KEY = 'serviceDrafts';
     const [drafts, setDrafts] = useState([]);
@@ -191,7 +198,8 @@ export default function ServicesDataTable({ services, disciplinesData, loading, 
         show_on_home: false,
         cover_photo: null,
         disciplines: [],
-        sections: [] // Changed from fixed content1-3 to dynamic sections array
+        sections: [], // Changed from fixed content1-3 to dynamic sections array
+        order: 1 // ADDED: Order field with default value 1
     });
 
     const [editFormData, setEditFormData] = useState({
@@ -204,7 +212,8 @@ export default function ServicesDataTable({ services, disciplinesData, loading, 
         cover_photo: null,
         existing_cover_photo: null,
         disciplines: [],
-        sections: [] // Changed from fixed content1-3 to dynamic sections array
+        sections: [], // Changed from fixed content1-3 to dynamic sections array
+        order: 1 // ADDED: Order field
     });
 
     // Fetch current user for permissions
@@ -357,6 +366,7 @@ export default function ServicesDataTable({ services, disciplinesData, loading, 
             show_on_home: formData.show_on_home || false,
             disciplines: formData.disciplines || [],
             sections: sectionsForDraft,
+            order: formData.order || 1, // ADDED: Include order in draft
             cover_photo_meta: formData.cover_photo ? { name: formData.cover_photo.name, type: formData.cover_photo.type, size: formData.cover_photo.size } : null,
         };
     };
@@ -388,6 +398,7 @@ export default function ServicesDataTable({ services, disciplinesData, loading, 
             disciplines: draft.disciplines || [],
             sections: restoredSections,
             cover_photo: null,
+            order: draft.order || 1 // ADDED: Restore order from draft
         });
         setIsSlugManuallyEdited(true);
         setActiveDraftId(draft.id);
@@ -411,7 +422,8 @@ export default function ServicesDataTable({ services, disciplinesData, loading, 
                         title: draft.title,
                         description: draft.description,
                         disciplines: draft.disciplines,
-                        sections: draft.sections
+                        sections: draft.sections,
+                        order: draft.order // ADDED: Include order
                     });
 
                     if (currentContent !== lastAutoSaveRef.current) {
@@ -459,6 +471,14 @@ export default function ServicesDataTable({ services, disciplinesData, loading, 
             [field]: value
         }));
         setCurrentPage(1);
+    };
+
+    const handleSort = (key) => {
+        let direction = 'ascending';
+        if (sortConfig.key === key && sortConfig.direction === 'ascending') {
+            direction = 'descending';
+        }
+        setSortConfig({ key, direction });
     };
 
     const handleToggleStatus = async (serviceId, currentStatus) => {
@@ -536,6 +556,11 @@ export default function ServicesDataTable({ services, disciplinesData, loading, 
                 ...prev,
                 [name]: files[0]
             }));
+        } else if (type === 'number') {
+            setFormData(prev => ({
+                ...prev,
+                [name]: parseInt(value) || 1
+            }));
         } else {
             setFormData(prev => ({
                 ...prev,
@@ -580,6 +605,11 @@ export default function ServicesDataTable({ services, disciplinesData, loading, 
             setEditFormData(prev => ({
                 ...prev,
                 [name]: files[0]
+            }));
+        } else if (type === 'number') {
+            setEditFormData(prev => ({
+                ...prev,
+                [name]: parseInt(value) || 1
             }));
         } else {
             setEditFormData(prev => ({
@@ -720,6 +750,12 @@ export default function ServicesDataTable({ services, disciplinesData, loading, 
         }));
     };
 
+    useEffect(() => {
+      console.log(editFormData);
+      
+    }, [editFormData])
+    
+
     const removeEditSection = (sectionId) => {
         setEditFormData(prev => ({
             ...prev,
@@ -781,7 +817,8 @@ export default function ServicesDataTable({ services, disciplinesData, loading, 
             show_on_home: false,
             cover_photo: null,
             disciplines: [],
-            sections: []
+            sections: [],
+            order: 1 // ADDED: Reset order to 1
         });
         setIsSlugManuallyEdited(false);
     };
@@ -813,7 +850,8 @@ export default function ServicesDataTable({ services, disciplinesData, loading, 
                 cover_photo: null,
                 existing_cover_photo: serviceData.cover_photo,
                 disciplines: serviceData.disciplines?.map(d => d.id) || [],
-                sections: formattedSections
+                sections: formattedSections,
+                order: serviceData.order || 1 // ADDED: Include order from API
             });
             setIsEditSlugManuallyEdited(true);
             setShowEditModal(true);
@@ -841,6 +879,7 @@ export default function ServicesDataTable({ services, disciplinesData, loading, 
             formDataToSend.append('is_active', formData.is_active ? 1 : 0);
             formDataToSend.append('show_on_home', formData.show_on_home ? 1 : 0);
             formDataToSend.append('description', formData.description);
+            formDataToSend.append('order', formData.order); // ADDED: Append order
 
             formData.disciplines.forEach(disciplineId => {
                 formDataToSend.append('disciplines[]', disciplineId);
@@ -910,6 +949,7 @@ export default function ServicesDataTable({ services, disciplinesData, loading, 
             formDataToSend.append('is_active', editFormData.is_active ? 1 : 0);
             formDataToSend.append('show_on_home', editFormData.show_on_home ? 1 : 0);
             formDataToSend.append('description', editFormData.description);
+            formDataToSend.append('order', editFormData.order); // ADDED: Append order
             formDataToSend.append('_method', 'POST');
 
             editFormData.disciplines.forEach(disciplineId => {
@@ -986,6 +1026,10 @@ export default function ServicesDataTable({ services, disciplinesData, loading, 
         const matchesDiscipline = filters.discipline === '' ||
             (service.disciplines && service.disciplines.some(d => d.id.toString() === filters.discipline));
 
+        // Order filter - check if order matches
+        const matchesOrder = filters.order === '' || 
+            (service.order !== undefined && service.order !== null && service.order.toString() === filters.order);
+
         // Date range filter on created_at
         let matchesDate = true;
         if (service.created_at) {
@@ -1000,12 +1044,33 @@ export default function ServicesDataTable({ services, disciplinesData, loading, 
             }
         }
 
-        return matchesGlobal && matchesTitle && matchesStatus && matchesAuthor && matchesDiscipline && matchesDate;
+        return matchesGlobal && matchesTitle && matchesStatus && matchesAuthor && matchesDiscipline && matchesOrder && matchesDate;
     }) || [];
 
+    // Sort filtered services
+    const sortedServices = [...filteredServices].sort((a, b) => {
+        if (sortConfig.key === 'order') {
+            // Handle null/undefined order values
+            const orderA = a.order || 9999;
+            const orderB = b.order || 9999;
+            if (sortConfig.direction === 'ascending') {
+                return orderA - orderB;
+            } else {
+                return orderB - orderA;
+            }
+        } else if (sortConfig.key === 'title') {
+            if (sortConfig.direction === 'ascending') {
+                return (a.title || '').localeCompare(b.title || '');
+            } else {
+                return (b.title || '').localeCompare(a.title || '');
+            }
+        }
+        return 0;
+    });
+
     // Pagination logic
-    const totalPages = Math.ceil(filteredServices.length / rowsPerPage);
-    const paginatedServices = filteredServices.slice(
+    const totalPages = Math.ceil(sortedServices.length / rowsPerPage);
+    const paginatedServices = sortedServices.slice(
         (currentPage - 1) * rowsPerPage,
         currentPage * rowsPerPage
     );
@@ -1017,6 +1082,16 @@ export default function ServicesDataTable({ services, disciplinesData, loading, 
         return (
             <span className={`flex justify-center w-fit items-center px-2.5 py-1 rounded-md text-xs font-medium ${statusClass} min-w-16 text-center`}>
                 {is_active ? 'Active' : 'Inactive'}
+            </span>
+        );
+    };
+
+    const orderBadge = (order) => {
+        const orderValue = order || 0;
+        return (
+            <span className="inline-flex items-center justify-center px-2.5 py-1 rounded-md bg-blue-100 text-blue-800 text-xs font-medium min-w-12">
+                <FaSortNumericUp className="mr-1" size={10} />
+                {orderValue}
             </span>
         );
     };
@@ -1041,7 +1116,7 @@ export default function ServicesDataTable({ services, disciplinesData, loading, 
         return (
             <div className="flex justify-between items-center mt-4 px-4 pb-1">
                 <div className='text-xs'>
-                    Showing {((currentPage - 1) * rowsPerPage + 1)}-{Math.min(currentPage * rowsPerPage, filteredServices.length)} of {filteredServices.length} entries
+                    Showing {((currentPage - 1) * rowsPerPage + 1)}-{Math.min(currentPage * rowsPerPage, sortedServices.length)} of {sortedServices.length} entries
                 </div>
                 <div className="flex gap-1">
                     <button
@@ -1078,7 +1153,7 @@ export default function ServicesDataTable({ services, disciplinesData, loading, 
     // Handle select all
     const handleSelectAll = (isSelected) => {
         if (isSelected) {
-            setSelectedServices(filteredServices.map(service => service.id));
+            setSelectedServices(sortedServices.map(service => service.id));
             setSelectAll(true);
         } else {
             setSelectedServices([]);
@@ -1342,7 +1417,7 @@ export default function ServicesDataTable({ services, disciplinesData, loading, 
                                 <div className="flex items-center">
                                     <input
                                         type="checkbox"
-                                        checked={selectAll && filteredServices.length > 0}
+                                        checked={selectAll && sortedServices.length > 0}
                                         onChange={(e) => handleSelectAll(e.target.checked)}
                                         className="h-4 w-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
                                     />
@@ -1376,6 +1451,17 @@ export default function ServicesDataTable({ services, disciplinesData, loading, 
                                         </option>
                                     ))}
                                 </select>
+                            </th>
+                            <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                {/* ADDED: Order Filter */}
+                                <input
+                                    type="number"
+                                    value={filters.order}
+                                    onChange={(e) => handleFilterChange('order', e.target.value)}
+                                    placeholder="Order"
+                                    className="text-xs p-1 border rounded w-full"
+                                    min="1"
+                                />
                             </th>
                             <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                 <select
@@ -1415,7 +1501,7 @@ export default function ServicesDataTable({ services, disciplinesData, loading, 
                     <tbody className="bg-white divide-y divide-gray-200 text-sm">
                         {loading ? (
                             <tr>
-                                <td colSpan="7" className="px-3 py-4 text-center">
+                                <td colSpan="8" className="px-3 py-4 text-center">
                                     <div className="flex justify-center items-center gap-2">
                                         <FaSpinner className="animate-spin" size={18} />
                                         Loading services...
@@ -1424,7 +1510,7 @@ export default function ServicesDataTable({ services, disciplinesData, loading, 
                             </tr>
                         ) : paginatedServices.length === 0 ? (
                             <tr>
-                                <td colSpan="7" className="px-3 py-4 text-center">
+                                <td colSpan="8" className="px-3 py-4 text-center">
                                     No services found
                                 </td>
                             </tr>
@@ -1457,7 +1543,7 @@ export default function ServicesDataTable({ services, disciplinesData, loading, 
                                         )}
                                     </td>
                                     <td className="px-3 py-4 whitespace-nowrap">
-                                        {/* NEW: Display disciplines for each project */}
+                                        {/* Display disciplines for each project */}
                                         <div className="flex flex-wrap gap-1">
                                             {service.disciplines && service.disciplines.length > 0 ? (
                                                 service.disciplines.map((discipline) => (
@@ -1472,6 +1558,9 @@ export default function ServicesDataTable({ services, disciplinesData, loading, 
                                                 <span className="text-gray-500 text-xs">No disciplines</span>
                                             )}
                                         </div>
+                                    </td>
+                                    <td className="px-3 py-4 whitespace-nowrap">
+                                        {orderBadge(service.order)}
                                     </td>
                                     <td className="px-3 py-4 whitespace-nowrap">
                                         {statusBadge(service.is_active)}
@@ -1647,6 +1736,7 @@ export default function ServicesDataTable({ services, disciplinesData, loading, 
                             <thead className="bg-gray-50">
                                 <tr>
                                     <th className="px-4 py-2 text-left">Title</th>
+                                    <th className="px-4 py-2 text-left">Order</th>
                                     <th className="px-4 py-2 text-left">Updated</th>
                                     <th className="px-4 py-2 text-left">Note</th>
                                     <th className="px-4 py-2 text-left">Actions</th>
@@ -1659,6 +1749,7 @@ export default function ServicesDataTable({ services, disciplinesData, loading, 
                                     .map(d => (
                                         <tr key={d.id} className="hover:bg-gray-50">
                                             <td className="px-4 py-2">{d.title || <span className="italic text-gray-400">Untitled</span>}</td>
+                                            <td className="px-4 py-2">{d.order || 1}</td>
                                             <td className="px-4 py-2">{new Date(d.updatedAt).toLocaleString()}</td>
                                             <td className="px-4 py-2 text-xs text-gray-500">
                                                 {d.cover_photo_meta ? `Attachment: ${d.cover_photo_meta.name} (re-attach required)` : 'No attachment'}
@@ -1723,6 +1814,21 @@ export default function ServicesDataTable({ services, disciplinesData, loading, 
                                             className="w-full px-3 py-2 border rounded-md"
                                             required
                                         />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Order*</label>
+                                        <input
+                                            type="number"
+                                            name="order"
+                                            value={formData.order}
+                                            onChange={handleFormChange}
+                                            className="w-full px-3 py-2 border rounded-md"
+                                            min="1"
+                                            required
+                                        />
+                                        <p className="text-xs text-gray-500 mt-1">
+                                            Lower numbers appear first. Default is 1.
+                                        </p>
                                     </div>
                                 </div>
 
@@ -1968,6 +2074,21 @@ export default function ServicesDataTable({ services, disciplinesData, loading, 
                                                 className="w-full px-3 py-2 border rounded-md"
                                                 required
                                             />
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-1">Order*</label>
+                                            <input
+                                                type="number"
+                                                name="order"
+                                                value={editFormData.order}
+                                                onChange={handleEditFormChange}
+                                                className="w-full px-3 py-2 border rounded-md"
+                                                min="1"
+                                                required
+                                            />
+                                            <p className="text-xs text-gray-500 mt-1">
+                                                Lower numbers appear first. Default is 1.
+                                            </p>
                                         </div>
                                     </div>
 
