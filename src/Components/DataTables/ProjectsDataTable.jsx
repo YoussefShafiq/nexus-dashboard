@@ -801,7 +801,7 @@ export default function ProjectsDataTable({ projects, disciplinesData, loading, 
                 show_on_home: projectData.show_on_home || false,
                 cover_photo: null,
                 existing_cover_photo: projectData.cover_photo,
-                disciplines: projectData.disciplines ? projectData.disciplines.map(d => d.id) : [],
+                disciplines: projectData.disciplines ? projectData.disciplines.map(d => d.slug) : [],
                 sections: formattedSections
             });
             setIsEditSlugManuallyEdited(true);
@@ -1803,12 +1803,12 @@ export default function ProjectsDataTable({ projects, disciplinesData, loading, 
                                             <div key={discipline.id} className="flex items-center">
                                                 <input
                                                     type="checkbox"
-                                                    id={`discipline-${discipline.id}`}
-                                                    checked={formData.disciplines.includes(discipline.id)}
-                                                    onChange={(e) => handleDisciplinesChange(discipline.id, e.target.checked)}
+                                                    id={`discipline-${discipline.slug}`}
+                                                    checked={formData.disciplines.includes(discipline.slug)}
+                                                    onChange={(e) => handleDisciplinesChange(discipline.slug, e.target.checked)}
                                                     className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                                                 />
-                                                <label htmlFor={`discipline-${discipline.id}`} className="ml-2 text-sm text-gray-700">
+                                                <label htmlFor={`discipline-${discipline.slug}`} className="ml-2 text-sm text-gray-700">
                                                     {discipline.title}
                                                     {!discipline.is_active && (
                                                         <span className="ml-1 text-xs text-orange-600">(inactive)</span>
@@ -2053,15 +2053,15 @@ export default function ProjectsDataTable({ projects, disciplinesData, loading, 
                                         <label className="block text-sm font-medium text-gray-700 mb-2">Disciplines</label>
                                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 max-h-48 overflow-y-auto p-2 border rounded-md">
                                             {disciplinesData?.map((discipline) => (
-                                                <div key={discipline.id} className="flex items-center">
+                                                <div key={discipline.slug} className="flex items-center">
                                                     <input
                                                         type="checkbox"
-                                                        id={`edit-discipline-${discipline.id}`}
-                                                        checked={editFormData.disciplines.includes(discipline.id)}
-                                                        onChange={(e) => handleEditDisciplinesChange(discipline.id, e.target.checked)}
+                                                        id={`edit-discipline-${discipline.slug}`}
+                                                        checked={editFormData.disciplines.includes(discipline.slug)}
+                                                        onChange={(e) => handleEditDisciplinesChange(discipline.slug, e.target.checked)}
                                                         className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                                                     />
-                                                    <label htmlFor={`edit-discipline-${discipline.id}`} className="ml-2 text-sm text-gray-700">
+                                                    <label htmlFor={`edit-discipline-${discipline.slug}`} className="ml-2 text-sm text-gray-700">
                                                         {discipline.title}
                                                         {!discipline.is_active && (
                                                             <span className="ml-1 text-xs text-orange-600">(inactive)</span>

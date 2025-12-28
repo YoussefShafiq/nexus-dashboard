@@ -849,7 +849,7 @@ export default function ServicesDataTable({ services, disciplinesData, loading, 
                 show_on_home: serviceData.show_on_home || false,
                 cover_photo: null,
                 existing_cover_photo: serviceData.cover_photo,
-                disciplines: serviceData.disciplines?.map(d => d.id) || [],
+                disciplines: serviceData.disciplines?.map(d => d.slug) || [],
                 sections: formattedSections,
                 order: serviceData.order || 1 // ADDED: Include order from API
             });
@@ -1024,7 +1024,7 @@ export default function ServicesDataTable({ services, disciplinesData, loading, 
 
         // Discipline filter - check if service has the selected discipline
         const matchesDiscipline = filters.discipline === '' ||
-            (service.disciplines && service.disciplines.some(d => d.id.toString() === filters.discipline));
+            (service.disciplines && service.disciplines.some(d => d.slug.toString() === filters.discipline));
 
         // Order filter - check if order matches
         const matchesOrder = filters.order === '' || 
@@ -1445,7 +1445,7 @@ export default function ServicesDataTable({ services, disciplinesData, loading, 
                                 >
                                     <option value="">All Disciplines</option>
                                     {disciplinesData?.map((discipline) => (
-                                        <option key={discipline.id} value={discipline.id}>
+                                        <option key={discipline.slug} value={discipline.slug}>
                                             {discipline.title}
                                             {!discipline.is_active && ' (inactive)'}
                                         </option>
@@ -1548,7 +1548,7 @@ export default function ServicesDataTable({ services, disciplinesData, loading, 
                                             {service.disciplines && service.disciplines.length > 0 ? (
                                                 service.disciplines.map((discipline) => (
                                                     <span
-                                                        key={discipline.id}
+                                                        key={discipline.slug}
                                                         className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium"
                                                     >
                                                         {discipline.title}
@@ -1917,15 +1917,15 @@ export default function ServicesDataTable({ services, disciplinesData, loading, 
                                     <label className="block text-sm font-medium text-gray-700 mb-2">Disciplines</label>
                                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 max-h-48 overflow-y-auto p-2 border rounded-md">
                                         {disciplinesData?.map((discipline) => (
-                                            <div key={discipline.id} className="flex items-center">
+                                            <div key={discipline.slug} className="flex items-center">
                                                 <input
                                                     type="checkbox"
-                                                    id={`discipline-${discipline.id}`}
-                                                    checked={formData.disciplines.includes(discipline.id)}
-                                                    onChange={(e) => handleDisciplinesChange(discipline.id, e.target.checked)}
+                                                    id={`discipline-${discipline.slug}`}
+                                                    checked={formData.disciplines.includes(discipline.slug)}
+                                                    onChange={(e) => handleDisciplinesChange(discipline.slug, e.target.checked)}
                                                     className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                                                 />
-                                                <label htmlFor={`discipline-${discipline.id}`} className="ml-2 text-sm text-gray-700">
+                                                <label htmlFor={`discipline-${discipline.slug}`} className="ml-2 text-sm text-gray-700">
                                                     {discipline.title}
                                                     {!discipline.is_active && (
                                                         <span className="ml-1 text-xs text-orange-600">(inactive)</span>
@@ -2186,15 +2186,15 @@ export default function ServicesDataTable({ services, disciplinesData, loading, 
                                         <label className="block text-sm font-medium text-gray-700 mb-2">Disciplines</label>
                                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 max-h-48 overflow-y-auto p-2 border rounded-md">
                                             {disciplinesData?.map((discipline) => (
-                                                <div key={discipline.id} className="flex items-center">
+                                                <div key={discipline.slug} className="flex items-center">
                                                     <input
                                                         type="checkbox"
-                                                        id={`edit-discipline-${discipline.id}`}
-                                                        checked={editFormData.disciplines.includes(discipline.id)}
-                                                        onChange={(e) => handleEditDisciplinesChange(discipline.id, e.target.checked)}
+                                                        id={`edit-discipline-${discipline.slug}`}
+                                                        checked={editFormData.disciplines.includes(discipline.slug)}
+                                                        onChange={(e) => handleEditDisciplinesChange(discipline.slug, e.target.checked)}
                                                         className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                                                     />
-                                                    <label htmlFor={`edit-discipline-${discipline.id}`} className="ml-2 text-sm text-gray-700">
+                                                    <label htmlFor={`edit-discipline-${discipline.slug}`} className="ml-2 text-sm text-gray-700">
                                                         {discipline.title}
                                                         {!discipline.is_active && (
                                                             <span className="ml-1 text-xs text-orange-600">(inactive)</span>

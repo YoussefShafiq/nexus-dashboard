@@ -18,7 +18,13 @@ import {
     FaUsers,
     FaUserCog,
     FaGlobe,
-    FaLink
+    FaLink,
+    FaFilePdf,
+    FaFileWord,
+    FaFileExcel,
+    FaFileArchive,
+    FaDownload,
+    FaTrash
 } from 'react-icons/fa';
 
 export default function AboutUs() {
@@ -27,6 +33,7 @@ export default function AboutUs() {
     const [isEditing, setIsEditing] = useState(false);
     const [uploadingImage, setUploadingImage] = useState(false);
     const [imagePreview, setImagePreview] = useState('');
+    const [portfolioFilePreview, setPortfolioFilePreview] = useState('');
 
     const { data: currentUser, isLoading: isCurrentUserLoading } = useQuery({
         queryKey: ['currentUser'],
@@ -48,11 +55,13 @@ export default function AboutUs() {
         projects: '',
         clients: '',
         engineers: '',
-        image: null
+        image: null,
+        portfolio_file: null
     });
 
-    // File input ref
+    // File input refs
     const fileInputRef = React.useRef(null);
+    const portfolioFileInputRef = React.useRef(null);
 
     // Fetch about us data
     const { data: aboutusData, isLoading, isError, error } = useQuery({
@@ -79,10 +88,14 @@ export default function AboutUs() {
                 projects: data.projects || '',
                 clients: data.clients || '',
                 engineers: data.engineers || '',
-                image: null
+                image: null,
+                portfolio_file: null
             });
             if (data.image) {
                 setImagePreview(data.image);
+            }
+            if (data.portfolio_file) {
+                setPortfolioFilePreview(data.portfolio_file);
             }
         }
     }, [aboutusData]);
@@ -124,6 +137,41 @@ export default function AboutUs() {
         }
     };
 
+    // Handle portfolio file change
+    const handlePortfolioFileChange = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            // Validate file type
+            const allowedTypes = [
+                'application/pdf',
+                'application/msword',
+                'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                'application/vnd.ms-excel',
+                'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                'application/zip',
+                'application/x-rar-compressed',
+                'application/x-7z-compressed'
+            ];
+            
+            if (!allowedTypes.includes(file.type)) {
+                toast.error('Please select a valid file type (PDF, Word, Excel, ZIP, RAR, 7Z)');
+                return;
+            }
+
+            // Validate file size (50MB)
+            if (file.size > 200 * 1024 * 1024) {
+                toast.error('File size should be less than 200MB');
+                return;
+            }
+
+            setFormData(prev => ({
+                ...prev,
+                portfolio_file: file
+            }));
+            setPortfolioFilePreview(URL.createObjectURL(file));
+        }
+    };
+
     const handleRemoveImage = () => {
         setFormData(prev => ({
             ...prev,
@@ -133,6 +181,52 @@ export default function AboutUs() {
         if (fileInputRef.current) {
             fileInputRef.current.value = '';
         }
+    };
+
+    const handleRemovePortfolioFile = () => {
+        setFormData(prev => ({
+            ...prev,
+            portfolio_file: null
+        }));
+        setPortfolioFilePreview('');
+        if (portfolioFileInputRef.current) {
+            portfolioFileInputRef.current.value = '';
+        }
+    };
+
+    // Get file icon based on type
+    const getFileIcon = (fileName) => {
+        if (!fileName) return <FaFilePdf className="text-red-500" />;
+        
+        const ext = fileName.split('.').pop().toLowerCase();
+        switch (ext) {
+            case 'pdf':
+                return <FaFilePdf className="text-red-500" />;
+            case 'doc':
+            case 'docx':
+                return <FaFileWord className="text-blue-500" />;
+            case 'xls':
+            case 'xlsx':
+                return <FaFileExcel className="text-green-500" />;
+            case 'zip':
+            case 'rar':
+            case '7z':
+                return <FaFileArchive className="text-yellow-500" />;
+            default:
+                return <FaFilePdf className="text-gray-500" />;
+        }
+    };
+
+    // Get file name from URL or file object
+    const getFileName = () => {
+        if (formData.portfolio_file instanceof File) {
+            return formData.portfolio_file.name;
+        }
+        if (aboutusData?.data?.data?.portfolio_file) {
+            const url = aboutusData.data.data.portfolio_file;
+            return url.split('/').pop() || 'portfolio-file';
+        }
+        return 'portfolio-file';
     };
 
     // Update mutation
@@ -148,6 +242,9 @@ export default function AboutUs() {
             data.append('engineers', formData.engineers);
             if (formData.image) {
                 data.append('image', formData.image);
+            }
+            if (formData.portfolio_file) {
+                data.append('portfolio_file', formData.portfolio_file);
             }
             data.append('_method', 'PUT');
 
@@ -183,12 +280,12 @@ export default function AboutUs() {
         e.preventDefault();
 
         // Validate required fields
-        if (!formData.our_mission || !formData.our_vision || !formData.portfolio) {
+        if (!formData.our_mission || !formData.our_vision) {
             toast.error('Please fill in all required fields');
             return;
         }
 
-        // Validate portfolio URL format
+        // Validate portfolio URL format (if provided)
         if (formData.portfolio && !isValidUrl(formData.portfolio)) {
             toast.error('Please enter a valid URL for the portfolio');
             return;
@@ -226,9 +323,11 @@ export default function AboutUs() {
                 projects: data.projects || '',
                 clients: data.clients || '',
                 engineers: data.engineers || '',
-                image: null
+                image: null,
+                portfolio_file: null
             });
             setImagePreview(data.image || '');
+            setPortfolioFilePreview(data.portfolio_file || '');
         }
     };
 
@@ -460,7 +559,7 @@ export default function AboutUs() {
                                     </div>
                                 </div>
 
-                                {/* Right Column - Mission, Vision and Portfolio */}
+                                {/* Right Column - Mission, Vision, Portfolio and File */}
                                 <div className="space-y-6">
                                     {/* Our Mission */}
                                     <div>
@@ -510,11 +609,11 @@ export default function AboutUs() {
                                         )}
                                     </div>
 
-                                    {/* Portfolio */}
+                                    {/* Portfolio URL */}
                                     <div>
                                         <label className="text-sm font-medium text-gray-700 mb-3 flex items-center gap-2">
                                             <FaLink className="text-primary" />
-                                            Portfolio URL *
+                                            Portfolio URL
                                         </label>
                                         {isEditing ? (
                                             <div>
@@ -524,10 +623,9 @@ export default function AboutUs() {
                                                     onChange={(e) => setFormData(prev => ({ ...prev, portfolio: e.target.value }))}
                                                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-primary"
                                                     placeholder="https://drive.google.com/your-portfolio-link"
-                                                    required
                                                 />
                                                 <p className="text-xs text-gray-500 mt-2">
-                                                    Enter the Google Drive URL for your portfolio
+                                                    Enter a Google Drive or other URL for your portfolio (optional)
                                                 </p>
                                             </div>
                                         ) : (
@@ -550,6 +648,76 @@ export default function AboutUs() {
                                             </div>
                                         )}
                                     </div>
+
+                                    {/* Portfolio File Upload */}
+                                    <div>
+                                        <label className="text-sm font-medium text-gray-700 mb-3 flex items-center gap-2">
+                                            <FaFilePdf className="text-primary" />
+                                            Portfolio File
+                                        </label>
+                                        <div className="flex flex-col items-center gap-4">
+                                            {portfolioFilePreview || aboutusData?.data?.data?.portfolio_file ? (
+                                                <div className="w-full">
+                                                    <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
+                                                        {getFileIcon(getFileName())}
+                                                        <div className="flex-1 min-w-0">
+                                                            <p className="font-medium text-gray-700 truncate">
+                                                                {getFileName()}
+                                                            </p>
+                                                        </div>
+                                                        <div className="flex items-center gap-2">
+                                                            <a
+                                                                href={portfolioFilePreview || aboutusData?.data?.data?.portfolio_file}
+                                                                target="_blank"
+                                                                rel="noopener noreferrer"
+                                                                className="p-2 text-green-600 hover:text-green-700 hover:bg-green-50 rounded-lg transition-all"
+                                                                title="View/Download"
+                                                            >
+                                                                <FaDownload size={16} />
+                                                            </a>
+                                                            {isEditing && (
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={handleRemovePortfolioFile}
+                                                                    className="p-2 text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-all"
+                                                                    title="Remove file"
+                                                                >
+                                                                    <FaTrash size={16} />
+                                                                </button>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            ) : (
+                                                <div className="w-full p-6 border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center gap-3">
+                                                    <FaFilePdf className="text-gray-400 text-4xl" />
+                                                    <span className="text-gray-500">No portfolio file uploaded</span>
+                                                </div>
+                                            )}
+
+                                            {isEditing && (
+                                                <div className="w-full">
+                                                    <input
+                                                        type="file"
+                                                        ref={portfolioFileInputRef}
+                                                        onChange={handlePortfolioFileChange}
+                                                        accept=".pdf,.doc,.docx,.xls,.xlsx,.zip,.rar,.7z"
+                                                        className="hidden"
+                                                    />
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => portfolioFileInputRef.current?.click()}
+                                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-all"
+                                                    >
+                                                        Choose Portfolio File
+                                                    </button>
+                                                    <p className="text-xs text-gray-500 mt-2 text-center">
+                                                        PDF, Word, Excel, ZIP, RAR, 7Z up to 200MB
+                                                    </p>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
 
@@ -561,6 +729,9 @@ export default function AboutUs() {
                                         <div>
                                             <p className="text-sm text-blue-800">
                                                 You are currently in preview mode. Click "Edit Information" to make changes.
+                                            </p>
+                                            <p className="text-xs text-blue-600 mt-1">
+                                                Note: You can upload a portfolio file (PDF, Word, Excel, or archive) in addition to or instead of a portfolio URL.
                                             </p>
                                         </div>
                                     </div>
